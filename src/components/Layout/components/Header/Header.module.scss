@@ -1,0 +1,48 @@
+.wrapper {
+    width: calc(100% - 180px);
+    height: var(--default-layout-header-height);
+    box-shadow: 0px 1px 1px rgba(0 0 0 / 12%);
+    background-color: #273759;
+    display: flex;
+    justify-content: center;
+    margin-left: 180px;
+}
+
+.inner {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    margin-left: 20px;
+}
+
+.action {
+    color: var(--white);
+    margin-right: 30px;
+    cursor: pointer;
+
+    
+    .notification {
+        height: 20px;
+        width: 20px;
+        padding: 0 15px ;
+    }
+    
+    .notification:hover {
+        color: #d0d6e1;
+    }
+
+    .information {
+        height: 20px;
+        width: 20px;
+        padding: 0 15px;
+    }
+
+    .information:hover {
+        color: #d0d6e1;
+    }
+}
