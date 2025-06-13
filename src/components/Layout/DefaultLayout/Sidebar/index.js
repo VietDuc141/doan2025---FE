@@ -8,8 +8,13 @@ function Sidebar() {
         <aside className={cx('wrapper')}>
             <ul className={cx('sidebar')}>
                 <ul className={cx('section-title')}>
-                    <h3>Bảng Điều Khiển</h3>
+                    <a href="/">
+                        <h3>Bảng Điều Khiển</h3>
+                    </a>
                 </ul>
+                <li>
+                    <a href="/play">Phát Lập Tức</a>
+                </li>
                 <li>
                     <a href="/plan">Lên lịch</a>
                 </li>
@@ -30,9 +35,6 @@ function Sidebar() {
                 </li>
                 <li>
                     <a href="/group-account">Nhóm tài khoản</a>
-                </li>
-                <li>
-                    <a href="/reports">Tất cả báo cáo</a>
                 </li>
             </ul>
         </aside>

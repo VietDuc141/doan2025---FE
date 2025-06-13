@@ -6,7 +6,9 @@ import PlayContent from '~/pages/PlayContent';
 import Screen from '~/pages/Screen';
 import User from '~/pages/User';
 import GroupAccount from '~/pages/GroupAccount';
-import Reports from '~/pages/Reports';
+import Login from '~/pages/Login';
+import Play from '~/pages/Play';
+import { LoginLayout } from '~/components/Layout';
 
 const publicRoutes = [
     { path: '/', component: Home },
@@ -17,7 +19,8 @@ const publicRoutes = [
     { path: '/screen', component: Screen },
     { path: '/user', component: User },
     { path: '/group-account', component: GroupAccount },
-    { path: '/reports', component: Reports },
+    { path: '/login', component: Login, layout: LoginLayout },
+    { path: '/play', component: Play },
 ];
 const privateRoutes = [];
 
