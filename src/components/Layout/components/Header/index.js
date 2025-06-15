@@ -4,6 +4,7 @@ import { faBell, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from '~/components/Modal/ProfileModal';
+import { useLogout } from '~/api/queries/authQueries';
 
 import styles from './Header.module.scss';
 import images from '~/assets/images';
@@ -30,9 +31,17 @@ function Header() {
         };
     }, [dropdownRef]);
 
-    const handleLogout = () => {
-        // Handle actual logout logic here (e.g., clear tokens)
-        navigate('/login');
+    const logoutMutation = useLogout();
+
+    const handleLogout = async () => {
+        try {
+            await logoutMutation.mutateAsync();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // Nếu có lỗi, vẫn chuyển về trang login vì token đã bị xóa
+            navigate('/login');
+        }
     };
 
     const handleProfileClick = () => {
