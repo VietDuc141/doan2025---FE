@@ -43,11 +43,6 @@ function Sidebar() {
                         Người sử dụng
                     </NavLink>
                 </li>
-                <li>
-                    <NavLink to="/group-account" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Nhóm tài khoản
-                    </NavLink>
-                </li>
             </ul>
         </aside>
     );

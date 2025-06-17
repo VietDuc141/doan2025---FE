@@ -1,11 +1,10 @@
 .wrapper {
-    width: calc(100% - 180px);
+    width: 100%;
     height: var(--default-layout-header-height);
     box-shadow: 0px 1px 1px rgba(0 0 0 / 12%);
     background-color: #273759;
     display: flex;
     justify-content: center;
-    margin-left: 180px;
 }
 
 .inner {

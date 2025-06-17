@@ -2,7 +2,7 @@ import { useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './User.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSync, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSync,} from '@fortawesome/free-solid-svg-icons';
 import AddUserModal from './AddUserModal';
 
 const cx = classNames.bind(styles);
@@ -120,8 +120,6 @@ function User() {
                     </div>
                     <div className={cx('table-buttons')}>
                         <button>Chọn cột hiển thị</button>
-                        <button>In</button>
-                        <button>CSV</button>
                     </div>
                 </div>
 
