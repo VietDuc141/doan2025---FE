@@ -1,5 +1,6 @@
 import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
+import { NavLink } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
@@ -13,28 +14,39 @@ function Sidebar() {
                     </a>
                 </ul>
                 <li>
-                    <a href="/play">Phát Lập Tức</a>
+                    <NavLink to="/play" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Phát Lập Tức
+                    </NavLink>
                 </li>
                 <li>
-                    <a href="/plan">Lên lịch</a>
+                    <NavLink to="/plan" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Lên lịch
+                    </NavLink>
                 </li>
                 <li>
-                    <a href="/timeline">Khung giờ phát</a>
+                    <NavLink to="/play-content" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Nội dung
+                    </NavLink>
                 </li>
                 <li>
-                    <a href="/campaign">Đợt Phát</a>
+                    <NavLink to="/timeline" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Khung giờ phát
+                    </NavLink>
                 </li>
                 <li>
-                    <a href="/play-content">Nội dung</a>
+                    <NavLink to="/campaign" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Đợt Phát
+                    </NavLink>
                 </li>
                 <li>
-                    <a href="/screen">Màn Hình</a>
+                    <NavLink to="/user" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Người sử dụng
+                    </NavLink>
                 </li>
                 <li>
-                    <a href="/user">Người sử dụng</a>
-                </li>
-                <li>
-                    <a href="/group-account">Nhóm tài khoản</a>
+                    <NavLink to="/group-account" className={({ isActive }) => cx('nav-link', { active: isActive })}>
+                        Nhóm tài khoản
+                    </NavLink>
                 </li>
             </ul>
         </aside>
