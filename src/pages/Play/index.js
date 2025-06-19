@@ -8,6 +8,7 @@ const cx = classNames.bind(styles);
 
 function Play() {
     const [showModal, setShowModal] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
 
     // Dummy data for content selection table, similar to PlayContent
     const mockContentData = [
@@ -37,12 +38,12 @@ function Play() {
                     <input type="text" placeholder="Nhập ID" />
                 </div>
                 <div className={cx('filter-group')}>
-                    <label>Màn Hình</label>
-                    <input type="text" placeholder="Chọn màn hình" />
-                </div>
-                <div className={cx('filter-group')}>
                     <label>Đến lúc</label>
                     <input type="time" />
+                </div>
+                <div className={cx('filter-group')}>
+                    <label>Đến Ngày</label>
+                    <input type="date" />
                 </div>
             </div>
 
@@ -68,7 +69,12 @@ function Play() {
                                 <td>{content.duration}</td>
                                 <td>{content.size}</td>
                                 <td>
-                                    <input type="checkbox" />
+                                    <input
+                                        type="radio"
+                                        name="option"
+                                        checked={selectedId === content.id}
+                                        onChange={() => setSelectedId(content.id)}
+                                    />
                                 </td>
                             </tr>
                         ))}

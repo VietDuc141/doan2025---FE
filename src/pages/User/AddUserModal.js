@@ -2,7 +2,7 @@ import { useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './User.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faFolderOpen, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
@@ -171,13 +171,6 @@ function AddUserModal({ onClose }) {
                                     checked={selectedRole === 'manual'}
                                     onChange={() => handleRoleSelect('manual')}
                                 />
-                                <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Manually create a user</div>
-                                    <div className={cx('role-description')}>
-                                        Selecting this option will direct you to the Add User form where you can
-                                        manually create user.
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
