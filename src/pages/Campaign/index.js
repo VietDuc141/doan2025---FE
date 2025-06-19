@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import styles from './Campaign.module.scss';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faSync, faPlus, faFolder, faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faSync, faPlus, } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
@@ -59,11 +59,6 @@ function Campaign() {
     const [showModal, setShowModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const [allSelected, setAllSelected] = useState(false);
-    const [isAllFolderChecked, setIsAllFolderChecked] = useState(false);
-    const [expanded, setExpanded] = useState(true);
-    const [showFolderModal, setShowFolderModal] = useState(false);
-    const [selectedFolder, setSelectedFolder] = useState(null);
-    const [selectedFolderPath, setSelectedFolderPath] = useState('');
 
     const typeOptions = [
         { value: 'layout_list', label: 'Danh sách bố cục' },
@@ -109,27 +104,6 @@ function Campaign() {
             setSelectedRows([index]);
             setAllSelected(false);
         }
-    };
-
-    const toggleFolder = () => {
-        setExpanded(!expanded);
-    };
-
-    const handleAllFolderChange = (e) => {
-        setIsAllFolderChecked(e.target.checked);
-    };
-
-    const handleFolderSelect = (folder, path) => {
-        setSelectedFolder(folder);
-        setSelectedFolderPath(path);
-    };
-
-    const handleFolderModalClose = () => {
-        setShowFolderModal(false);
-    };
-
-    const handleFolderModalSubmit = () => {
-        setShowFolderModal(false);
     };
 
     return (
@@ -210,39 +184,10 @@ function Campaign() {
                                 </ul>
                             )}
                         </div>
-                        <button>In</button>
-                        <button>CSV</button>
                     </div>
                 </div>
 
                 <div className={cx('table-main')}>
-                    <div className={cx('root-folder')}>
-                        <input type="text" placeholder="Tìm Kiếm" />
-                        <label>
-                            <input type="checkbox" checked={isAllFolderChecked} onChange={handleAllFolderChange} /> Tất
-                            cả thư mục
-                        </label>
-                        <div className={cx('folder', { 'all-selected': isAllFolderChecked })}>
-                            <span className={cx('arrow')} onClick={toggleFolder}>
-                                <FontAwesomeIcon icon={expanded ? faChevronDown : faChevronRight} />
-                            </span>
-                            <FontAwesomeIcon icon={faFolder} className={cx('folder-icon')} />
-                            <span>Root Folder</span>
-
-                            {expanded && (
-                                <div className={cx('sub-folder')}>
-                                    <div>
-                                        <FontAwesomeIcon icon={faFolder} className={cx('sub-folder-icon')} />
-                                        Khu 1
-                                    </div>
-                                    <div>
-                                        <FontAwesomeIcon icon={faFolder} className={cx('sub-folder-icon')} />
-                                        Khu 2
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                     <div className={cx('schedule-table-wrapper')}>
                         <table className={cx('schedule-table')}>
                             <thead>
@@ -296,19 +241,6 @@ function Campaign() {
                         </div>
                         <div className={cx('modal-body')}>
                             <div className={cx('form-group')}>
-                                <label>Thư mục</label>
-                                <div className={cx('folder-selection')}>
-                                    <button className={cx('folder-button')} onClick={() => setShowFolderModal(true)}>
-                                        Chọn thư mục
-                                    </button>
-                                    {selectedFolderPath && (
-                                        <span className={cx('selected-path')}>{selectedFolderPath}</span>
-                                    )}
-                                </div>
-                                <small>Chọn thư mục cho đợt phát này</small>
-                            </div>
-
-                            <div className={cx('form-group')}>
                                 <label>Thể loại</label>
                                 <select>
                                     <option value="">Chọn thể loại</option>
@@ -359,68 +291,6 @@ function Campaign() {
                                 Hủy
                             </button>
                             <button className={cx('submit')}>Lưu</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showFolderModal && (
-                <div className={cx('modal')}>
-                    <div className={cx('modal-overlay')} onClick={handleFolderModalClose} />
-                    <div className={cx('modal-content')}>
-                        <div className={cx('modal-header')}>
-                            <h3>Chọn thư mục</h3>
-                            <button className={cx('close')} onClick={handleFolderModalClose}>
-                                <FontAwesomeIcon icon={faXmark} />
-                            </button>
-                        </div>
-                        <div className={cx('modal-body')}>
-                            <div className={cx('folder-select')}>
-                                <input type="text" placeholder="Tìm Kiếm" />
-                                <div className={cx('folder-tree')}>
-                                    <div
-                                        className={cx('folder-item', {
-                                            selected: selectedFolder === 'root',
-                                        })}
-                                        onClick={() => handleFolderSelect('root', 'Root Folder')}
-                                    >
-                                        <FontAwesomeIcon icon={faFolder} className={cx('icon')} />
-                                        Root Folder
-                                    </div>
-                                    <div
-                                        className={cx('folder-item', {
-                                            selected: selectedFolder === 'khu1',
-                                        })}
-                                        style={{ marginLeft: '20px' }}
-                                        onClick={() => handleFolderSelect('khu1', 'Root Folder > Khu 1')}
-                                    >
-                                        <FontAwesomeIcon icon={faFolder} className={cx('icon')} />
-                                        Khu 1
-                                    </div>
-                                    <div
-                                        className={cx('folder-item', {
-                                            selected: selectedFolder === 'khu2',
-                                        })}
-                                        style={{ marginLeft: '20px' }}
-                                        onClick={() => handleFolderSelect('khu2', 'Root Folder > Khu 2')}
-                                    >
-                                        <FontAwesomeIcon icon={faFolder} className={cx('icon')} />
-                                        Khu 2
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className={cx('modal-footer')}>
-                            <button className={cx('cancel')} onClick={handleFolderModalClose}>
-                                Hủy
-                            </button>
-                            <button
-                                className={cx('submit')}
-                                onClick={handleFolderModalSubmit}
-                                disabled={!selectedFolder}
-                            >
-                                Xong
-                            </button>
                         </div>
                     </div>
                 </div>

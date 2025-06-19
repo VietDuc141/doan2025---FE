@@ -42,43 +42,14 @@ const mockData = [
     },
 ];
 
-// Thêm cấu trúc dữ liệu thư mục
-const folderStructure = [
-    {
-        id: 1,
-        name: 'Root Folder',
-        isRoot: true,
-        path: 'Root Folder',
-        children: [
-            {
-                id: 2,
-                name: 'Khu 1',
-                path: 'Root Folder > Khu 1',
-                parent: 1,
-            },
-            {
-                id: 3,
-                name: 'Khu 2',
-                path: 'Root Folder > Khu 2',
-                parent: 1,
-            },
-        ],
-    },
-];
-
 function PlayContent() {
     const [visibleColumns, setVisibleColumns] = useState(['Tên', 'Thể loại', 'Thời lượng']);
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const [allSelected, setAllSelected] = useState(false);
-    const [isAllFolderChecked, setIsAllFolderChecked] = useState(false);
-    const [expanded, setExpanded] = useState(true);
     const [showAddContentModal, setShowAddContentModal] = useState(false);
     const [showUrlModal, setShowUrlModal] = useState(false);
-    const [showFolderModal, setShowFolderModal] = useState(false);
     const [showTidyModal, setShowTidyModal] = useState(false);
-    const [selectedFolder, setSelectedFolder] = useState({ name: 'Root Folder', path: 'Root Folder' });
-    const [folderSearchQuery, setFolderSearchQuery] = useState('');
     const [urlForm, setUrlForm] = useState({
         url: '',
         name: '',
@@ -123,14 +94,6 @@ function PlayContent() {
         }
     };
 
-    const toggleFolder = () => {
-        setExpanded(!expanded);
-    };
-
-    const handleAllFolderChange = (e) => {
-        setIsAllFolderChecked(e.target.checked);
-    };
-
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -154,70 +117,6 @@ function PlayContent() {
         fileInputRef.current?.click();
     };
 
-    const FolderModal = () => {
-        if (!showFolderModal) return null;
-
-        const handleFolderSelect = (folder) => {
-            setSelectedFolder(folder);
-            setShowFolderModal(false);
-        };
-
-        // Tạo danh sách phẳng các thư mục để tìm kiếm
-        const flatFolders = [folderStructure[0], ...folderStructure[0].children];
-
-        const filteredFolders = flatFolders.filter((folder) =>
-            folder.name.toLowerCase().includes(folderSearchQuery.toLowerCase()),
-        );
-
-        return (
-            <div className={cx('modal-overlay')}>
-                <div className={cx('folder-modal')}>
-                    <div className={cx('folder-modal-header')}>
-                        <h2>Chọn thư mục</h2>
-                        <button className={cx('close-button')} onClick={() => setShowFolderModal(false)}>
-                            <FontAwesomeIcon icon={faTimes} />
-                        </button>
-                    </div>
-                    <div className={cx('folder-modal-body')}>
-                        <div className={cx('search-box')}>
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm thư mục..."
-                                value={folderSearchQuery}
-                                onChange={(e) => setFolderSearchQuery(e.target.value)}
-                            />
-                        </div>
-                        <div className={cx('folder-tree')}>
-                            {filteredFolders.map((folder) => (
-                                <div
-                                    key={folder.id}
-                                    className={cx('folder-item', {
-                                        selected: selectedFolder.name === folder.name,
-                                    })}
-                                    onClick={() => handleFolderSelect(folder)}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faFolder}
-                                        className={cx('folder-icon', { root: folder.isRoot })}
-                                    />
-                                    <span className={cx({ subfolder: !folder.isRoot })}>{folder.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className={cx('folder-modal-footer')}>
-                        <button className={cx('cancel')} onClick={() => setShowFolderModal(false)}>
-                            Hủy
-                        </button>
-                        <button className={cx('select')} onClick={() => setShowFolderModal(false)}>
-                            Xong
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     const AddContentModal = () => {
         if (!showAddContentModal) return null;
 
@@ -231,10 +130,6 @@ function PlayContent() {
                         </button>
                     </div>
                     <div className={cx('modal-body')}>
-                        <div className={cx('current-folder')}>
-                            <label>Thư mục hiện tại:</label>
-                            <span>{selectedFolder.path}</span>
-                        </div>
                         <div
                             className={cx('upload-area')}
                             onClick={handleUploadClick}
@@ -260,7 +155,6 @@ function PlayContent() {
                                 <FontAwesomeIcon icon={faTimes} />
                                 Hủy tải lên
                             </button>
-                            <button onClick={() => setShowFolderModal(true)}>Chọn thư mục</button>
                         </div>
                     </div>
                 </div>
@@ -295,16 +189,6 @@ function PlayContent() {
                         </button>
                     </div>
                     <div className={cx('url-modal-body')}>
-                        <div className={cx('form-group', 'folder-group')}>
-                            <label>Thư mục</label>
-                            <div className={cx('folder-content')}>
-                                <button className={cx('folder-select-btn')} onClick={() => setShowFolderModal(true)}>
-                                    Chọn thư mục
-                                </button>
-                                <div className={cx('folder-path')}>{selectedFolder.path}</div>
-                                <div className={cx('folder-help')}>Chọn thư mục cho đợt phát này</div>
-                            </div>
-                        </div>
                         <div className={cx('form-group')}>
                             <label>URL</label>
                             <input
@@ -495,39 +379,10 @@ function PlayContent() {
                                 </ul>
                             )}
                         </div>
-                        <button>In</button>
-                        <button>CSV</button>
                     </div>
                 </div>
 
                 <div className={cx('table-main')}>
-                    <div className={cx('root-folder')}>
-                        <input type="text" placeholder="Tìm Kiếm" />
-                        <label>
-                            <input type="checkbox" checked={isAllFolderChecked} onChange={handleAllFolderChange} /> Tất
-                            cả thư mục
-                        </label>
-                        <div className={cx('folder', { 'all-selected': isAllFolderChecked })}>
-                            <span className={cx('arrow')} onClick={toggleFolder}>
-                                <FontAwesomeIcon icon={expanded ? faChevronDown : faChevronRight} />
-                            </span>
-                            <FontAwesomeIcon icon={faFolder} className={cx('folder-icon')} />
-                            <span>Root Folder</span>
-
-                            {expanded && (
-                                <div className={cx('sub-folder')}>
-                                    <div>
-                                        <FontAwesomeIcon icon={faFolder} className={cx('sub-folder-icon')} />
-                                        Khu 1
-                                    </div>
-                                    <div>
-                                        <FontAwesomeIcon icon={faFolder} className={cx('sub-folder-icon')} />
-                                        Khu 2
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                     <div className={cx('schedule-table-wrapper')}>
                         <table className={cx('schedule-table')}>
                             <thead>
@@ -570,7 +425,6 @@ function PlayContent() {
             </div>
             <AddContentModal />
             <URLContentModal />
-            <FolderModal />
             <TidyModal />
         </div>
     );

@@ -1,10 +1,11 @@
 .wrapper {
     width: 180px;
+    height: 100vh;
     background-color: #2d406b;
     position: fixed;
-    top: 0;
-    right: 0;
+    top: var(--default-layout-header-height);
     left: 0;
+    z-index: 100;
 }
 
 .sidebar {
@@ -28,33 +29,29 @@
     text-decoration: none;
 }
 
-.sidebar li {
-    width: 100%;
-    cursor: pointer;
-}
-
-.sidebar li a {
+.nav-link {
     display: block;
-    padding: 13px 15px;
-    color: var(--text-color);
+    padding: 15px 20px;
+    font-size: 18px;
+    color: var(--white);
     text-decoration: none;
     border-left: 4px solid transparent;
     transition:
         background 0.2s,
-        color 0.2s;
-}
+        color 0.2s,
+        border-left 0.2s;
 
-.sidebar li:hover a {
-    color: var(--white);
-    background-color: #273759;
-    border-left: 4px solid #f39c12;
-}
+    &.active {
+        background-color: #273759;
+        border-left: 4px solid #f39c12;
+        color: var(--white);
+    }
 
-.sidebar a:hover {
-    color: var(--white);
-    transition:
-        background 0.2s,
-        color 0.2s;
+    &:hover {
+        color: var(--white);
+        background-color: #273759;
+        border-left: 4px solid #f39c12;
+    }
 }
 
 .sidebar h3 {

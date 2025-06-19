@@ -9,7 +9,6 @@ const cx = classNames.bind(styles);
 const STEPS = {
     CREATE: 1,
     CREDENTIALS: 2,
-    SHARE: 3,
 };
 
 function AddUserModal({ onClose }) {
@@ -24,7 +23,6 @@ function AddUserModal({ onClose }) {
         username: '',
         password: '',
     });
-    const [selectedFolders, setSelectedFolders] = useState([]);
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -66,17 +64,13 @@ function AddUserModal({ onClose }) {
         }
     };
 
-    const handleFolderToggle = (folder) => {
-        setSelectedFolders((prev) => (prev.includes(folder) ? prev.filter((f) => f !== folder) : [...prev, folder]));
-    };
-
     const handleNext = () => {
         if (currentStep === STEPS.CREDENTIALS) {
             if (!validateCredentials()) {
                 return;
             }
         }
-        if (currentStep < STEPS.SHARE) {
+        if (currentStep < STEPS.CREDENTIALS) {
             setCurrentStep((prev) => prev + 1);
         }
     };
@@ -234,43 +228,6 @@ function AddUserModal({ onClose }) {
                         </div>
                     </div>
                 );
-            case STEPS.SHARE:
-                return (
-                    <div className={cx('share-section')}>
-                        <h3>Nội dung</h3>
-                        <p className={cx('help-text')}>
-                            Select any folders the new user should have shared with them for viewing and editing.
-                        </p>
-                        <div className={cx('folder-tree')}>
-                            <div className={cx('folder-item')}>
-                                <FontAwesomeIcon icon={faFolder} className={cx('folder-icon')} />
-                                <span>Root Folder</span>
-                            </div>
-                            <div className={cx('folder-item', 'subfolder')}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedFolders.includes('khu1')}
-                                    onChange={() => handleFolderToggle('khu1')}
-                                />
-                                <FontAwesomeIcon icon={faFolderOpen} className={cx('folder-icon')} />
-                                <span>Khu 1</span>
-                            </div>
-                            <div className={cx('folder-item', 'subfolder')}>
-                                <input
-                                    type="checkbox"
-                                    checked={selectedFolders.includes('khu2')}
-                                    onChange={() => handleFolderToggle('khu2')}
-                                />
-                                <FontAwesomeIcon icon={faFolderOpen} className={cx('folder-icon')} />
-                                <span>Khu 2</span>
-                            </div>
-                        </div>
-                        <div className={cx('folder-actions')}>
-                            <button onClick={() => setSelectedFolders([])}>Clear Selection</button>
-                            <button onClick={() => setSelectedFolders(['khu1', 'khu2'])}>Chọn tất cả</button>
-                        </div>
-                    </div>
-                );
             default:
                 return null;
         }
@@ -309,16 +266,6 @@ function AddUserModal({ onClose }) {
                         </div>
                         <div className={cx('step-label')}>Credentials</div>
                     </div>
-                    <div className={cx('step')}>
-                        <div
-                            className={cx('step-number', {
-                                active: currentStep === STEPS.SHARE,
-                            })}
-                        >
-                            3
-                        </div>
-                        <div className={cx('step-label')}>Chia sẻ</div>
-                    </div>
                 </div>
 
                 <div className={cx('modal-body')}>{renderStepContent()}</div>
@@ -332,7 +279,7 @@ function AddUserModal({ onClose }) {
                             Back
                         </button>
                     )}
-                    {currentStep < STEPS.SHARE ? (
+                    {currentStep < STEPS.CREDENTIALS ? (
                         <button className={cx('next')} onClick={handleNext} disabled={isNextDisabled()}>
                             Tiếp
                         </button>
