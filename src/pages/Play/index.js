@@ -2,12 +2,11 @@ import classNames from 'classnames/bind';
 import styles from './Play.module.scss';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
 function Play() {
-    const [showModal, setShowModal] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
 
     // Dummy data for content selection table, similar to PlayContent
@@ -22,7 +21,7 @@ function Play() {
             <div className={cx('header')}>
                 <h2>Nội dung phát</h2>
                 <div className={cx('actions')}>
-                    <button className={cx('add')} onClick={() => setShowModal(true)}>
+                    <button className={cx('add')}>
                         <FontAwesomeIcon icon={faPlay} /> Phát
                     </button>
                 </div>
