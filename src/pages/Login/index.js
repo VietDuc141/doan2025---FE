@@ -4,11 +4,13 @@ import classNames from 'classnames/bind';
 import styles from './Login.module.scss';
 import images from '~/assets/images';
 import { useLogin } from '~/api/queries/authQueries';
+import { useAuth } from '~/hooks/useAuth';
 
 const cx = classNames.bind(styles);
 
 function Login() {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [credentials, setCredentials] = useState({
         username: '',
         password: '',
@@ -30,8 +32,10 @@ function Login() {
         setError('');
 
         try {
-            await loginMutation.mutateAsync(credentials);
-            navigate('/'); // Chuyển về trang chủ sau khi đăng nhập thành công
+            const response = await loginMutation.mutateAsync(credentials);
+            // Lưu thông tin user trực tiếp từ response API
+            login(response.user); // Đảm bảo response.data chứa thông tin user đầy đủ
+            navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
         }

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from '~/App';
 import reportWebVitals from './reportWebVitals';
 import GlobalStyles from './components/GlobalStyles';
+import { AuthProvider } from './hooks/useAuth';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -19,9 +20,11 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
-            <GlobalStyles>
-                <App />
-            </GlobalStyles>
+            <AuthProvider>
+                <GlobalStyles>
+                    <App />
+                </GlobalStyles>
+            </AuthProvider>
         </QueryClientProvider>
     </React.StrictMode>,
 );
