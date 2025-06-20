@@ -1,8 +1,11 @@
 import classNames from 'classnames/bind';
 import styles from './Campaign.module.scss';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faSync, faPlus, } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faSync, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { useCampaigns } from '~/api/queries/campaignQueries';
+import { debounce } from 'lodash';
+import dayjs from 'dayjs';
 
 const cx = classNames.bind(styles);
 
@@ -22,39 +25,17 @@ const allColumns = [
     'Lượt hiển thị',
 ];
 
-const mockData = [
-    {
-        'Tên': 'Chiến dịch A',
-        'Thể loại': 'Danh Sách',
-        'Ngày bắt đầu': '2025-05-01',
-        'Ngày kết thúc': '2025-05-10',
-        '# Bố cục': 1,
-        'Nhãn': 'bgvguhb',
-        'Thời lượng': '00:01:00',
-        'Phát lại theo chu kỳ': 'Bật',
-        'Số lần phát': 5,
-        'Loại mục tiêu': 'Loại A',
-        'Mục tiêu': 'Mục tiêu A',
-        'Phát': 'Phát A',
-    },
-    {
-        'Tên': 'Chiến dịch B',
-        'Thể loại': 'Danh Sách',
-        'Ngày bắt đầu': '2025-05-02',
-        'Ngày kết thúc': '2025-05-12',
-        '# Bố cục': 0,
-        'Nhãn': '1|1',
-        'Thời lượng': '00:00:30',
-        'Phát lại theo chu kỳ': 'Tắt',
-        'Số lần phát': 3,
-        'Loại mục tiêu': 'Loại B',
-        'Mục tiêu': 'Mục tiêu B',
-        'Phát': 'Phát B',
-    },
-];
-
 function Campaign() {
-    const [visibleColumns, setVisibleColumns] = useState(['Tên', 'Thể loại', 'Ngày bắt đầu', 'Ngày kết thúc']);
+    const [visibleColumns, setVisibleColumns] = useState([
+        'Tên',
+        'Thể loại',
+        'Ngày bắt đầu',
+        'Ngày kết thúc',
+        'Nhãn',
+        'Thời lượng',
+        'Phát lại theo chu kỳ',
+        'Số lần phát',
+    ]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -69,6 +50,87 @@ function Campaign() {
         { value: 'round_robin', label: 'Xoay vòng' },
         { value: 'sequential', label: 'Chặn' },
     ];
+
+    const [uiFilters, setUiFilters] = useState({
+        _id: '',
+        name: '',
+        description: '',
+        isActive: '',
+    });
+
+    const [queryFilters, setQueryFilters] = useState({
+        _id: '',
+        name: '',
+        description: '',
+        isActive: '',
+    });
+
+    const debouncedSetQueryFilters = useMemo(
+        () =>
+            debounce((filters) => {
+                setQueryFilters(filters);
+            }, 500),
+        [],
+    );
+
+    // Handler cho việc thay đổi giá trị filter
+    const handleFilterChange = useCallback(
+        (e) => {
+            const { name, value } = e.target;
+
+            // Luôn cập nhật UI ngay lập tức
+            const newFilters = {
+                ...uiFilters,
+                [name]: value,
+            };
+            setUiFilters(newFilters);
+
+            // Đối với select boxes, cập nhật query ngay lập tức
+            if (name === 'isActive') {
+                setQueryFilters(newFilters);
+            }
+            // Đối với input text, sử dụng debounce
+            else {
+                debouncedSetQueryFilters(newFilters);
+            }
+        },
+        [uiFilters, debouncedSetQueryFilters],
+    );
+
+    const { data, isLoading, isError, error, refetch } = useCampaigns(queryFilters);
+
+    const campaigns = useMemo(
+        () =>
+            data?.data?.campaigns.map((campaign) => ({
+                Tên: campaign.name,
+                'Thể loại': campaign.description,
+                'Ngày bắt đầu': campaign?.schedule?.startDate
+                    ? dayjs(campaign.schedule.startDate).format('DD/MM/YYYY HH:mm:ss')
+                    : '',
+                'Ngày kết thúc': campaign?.schedule?.endDate
+                    ? dayjs(campaign.schedule.endDate).format('DD/MM/YYYY HH:mm:ss')
+                    : '',
+                '# Bố cục': campaign._id,
+                Nhãn:
+                    campaign.contents?.length > 0 ? campaign.contents.map((item) => item.content.name).join(', ') : '',
+                'Thời lượng':
+                    campaign.contents?.length > 0
+                        ? campaign.contents.reduce((sum, item) => sum + (item.duration || 0), 0)
+                        : 0,
+                'Phát lại theo chu kỳ': campaign.schedule.frequency,
+                'Số lần phát': campaign.priority,
+                'Loại mục tiêu': '',
+                'Mục tiêu': '',
+                Phát: '',
+                'Lượt hiển thị': '',
+            })) || [],
+        [data],
+    );
+
+    // Replace handleRefresh with refetch from useQuery
+    const handleRefresh = () => {
+        refetch();
+    };
 
     // Chọn cột hiển thị cho bảng
     const toggleColumn = (col) => {
@@ -88,7 +150,7 @@ function Campaign() {
             setSelectedRows([]);
             setAllSelected(false);
         } else {
-            const allIndexes = mockData.map((_, index) => index);
+            const allIndexes = campaigns.map((_, index) => index);
             setSelectedRows(allIndexes);
             setAllSelected(true);
         }
@@ -198,7 +260,7 @@ function Campaign() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockData.map((row, rowIdx) => (
+                                {campaigns.map((row, rowIdx) => (
                                     <tr
                                         key={rowIdx}
                                         onClick={() => handleRowClick(rowIdx)}
