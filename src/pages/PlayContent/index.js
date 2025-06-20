@@ -4,7 +4,18 @@ import classNames from 'classnames/bind';
 import styles from './PlayContent.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useContents, useUploadContent, useDeleteContent } from '~/api/queries/contentQueries';
-import { faFileUpload, faLink, faPlus, faSync, faTimes, faTrash, faUpload, faCopy, faShare, faCheck } from '@fortawesome/free-solid-svg-icons';
+import {
+    faFileUpload,
+    faLink,
+    faPlus,
+    faSync,
+    faTimes,
+    faTrash,
+    faUpload,
+    faCopy,
+    faShare,
+    faCheck,
+} from '@fortawesome/free-solid-svg-icons';
 import debounce from 'lodash/debounce';
 
 const cx = classNames.bind(styles);
@@ -24,7 +35,7 @@ function PlayContent() {
     const [urlForm, setUrlForm] = useState({
         url: '',
         name: '',
-        enableStats: 'Không'
+        enableStats: 'Không',
     });
     const [selectedFile, setSelectedFile] = useState(null);
     const [duration, setDuration] = useState(10); // Default duration for images
@@ -280,12 +291,16 @@ function PlayContent() {
     };
 
     const URLContentModal = () => {
-        const { register, handleSubmit, formState: { errors } } = useForm({
+        const {
+            register,
+            handleSubmit,
+            formState: { errors },
+        } = useForm({
             defaultValues: {
                 url: '',
                 name: '',
-                enableStats: 'Không'
-            }
+                enableStats: 'Không',
+            },
         });
 
         const onSubmit = (data) => {
@@ -414,7 +429,8 @@ function PlayContent() {
     };
 
     const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href)
+        navigator.clipboard
+            .writeText(window.location.href)
             .then(() => {
                 setCopyIcon(faCheck);
                 setTimeout(() => setCopyIcon(faCopy), 2000);
@@ -499,7 +515,7 @@ function PlayContent() {
                     <input type="text" name="_id" value={uiFilters._id} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
-                    <label>T��n</label>
+                    <label>Tên</label>
                     <input type="text" name="name" value={uiFilters.name} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
