@@ -2,12 +2,12 @@ import classNames from 'classnames/bind';
 import styles from './Play.module.scss';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
 function Play() {
-    const [showModal, setShowModal] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
 
     // Dummy data for content selection table, similar to PlayContent
     const mockContentData = [
@@ -21,7 +21,7 @@ function Play() {
             <div className={cx('header')}>
                 <h2>Nội dung phát</h2>
                 <div className={cx('actions')}>
-                    <button className={cx('add')} onClick={() => setShowModal(true)}>
+                    <button className={cx('add')}>
                         <FontAwesomeIcon icon={faPlay} /> Phát
                     </button>
                 </div>
@@ -37,12 +37,12 @@ function Play() {
                     <input type="text" placeholder="Nhập ID" />
                 </div>
                 <div className={cx('filter-group')}>
-                    <label>Màn Hình</label>
-                    <input type="text" placeholder="Chọn màn hình" />
-                </div>
-                <div className={cx('filter-group')}>
                     <label>Đến lúc</label>
                     <input type="time" />
+                </div>
+                <div className={cx('filter-group')}>
+                    <label>Đến Ngày</label>
+                    <input type="date" />
                 </div>
             </div>
 
@@ -68,7 +68,12 @@ function Play() {
                                 <td>{content.duration}</td>
                                 <td>{content.size}</td>
                                 <td>
-                                    <input type="checkbox" />
+                                    <input
+                                        type="radio"
+                                        name="option"
+                                        checked={selectedId === content.id}
+                                        onChange={() => setSelectedId(content.id)}
+                                    />
                                 </td>
                             </tr>
                         ))}
