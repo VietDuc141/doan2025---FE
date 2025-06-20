@@ -1,48 +1,18 @@
-import { useState, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import classNames from 'classnames/bind';
 import styles from './PlayContent.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faPlus,
-    faSync,
-    faFolder,
-    faTrash,
-    faLink,
-    faChevronDown,
-    faChevronRight,
-    faTimes,
-    faUpload,
-    faFileUpload,
-} from '@fortawesome/free-solid-svg-icons';
+import { useContents, useUploadContent, useDeleteContent } from '~/api/queries/contentQueries';
+import { faFileUpload, faLink, faPlus, faSync, faTimes, faTrash, faUpload, faCopy, faShare, faCheck } from '@fortawesome/free-solid-svg-icons';
+import debounce from 'lodash/debounce';
 
 const cx = classNames.bind(styles);
 
 const allColumns = ['ID', 'Tên', 'Thể loại', 'Tag', 'Ảnh', 'Thời lượng', 'Kích cỡ', 'Chủ sở hữu'];
 
-const mockData = [
-    {
-        ID: 1,
-        Tên: 'xibo',
-        'Thể loại': 'image',
-        Tag: 'imported',
-        Ảnh: '/path/to/xibo.jpg',
-        'Thời lượng': '00:00:10',
-        'Kích cỡ': '41.53 KiB',
-        'Chủ sở hữu': 'xibo_admin',
-    },
-    {
-        ID: 2,
-        Tên: 'aurora',
-        'Thể loại': 'image',
-        Tag: '',
-        Ảnh: '/path/to/aurora.jpg',
-        'Thời lượng': '00:00:10',
-        'Kích cỡ': '812.31 KiB',
-        'Chủ sở hữu': 'xibo_admin',
-    },
-];
-
 function PlayContent() {
+    const fileInputRef = useRef(null);
     const [visibleColumns, setVisibleColumns] = useState(['Tên', 'Thể loại', 'Thời lượng']);
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -50,15 +20,91 @@ function PlayContent() {
     const [showAddContentModal, setShowAddContentModal] = useState(false);
     const [showUrlModal, setShowUrlModal] = useState(false);
     const [showTidyModal, setShowTidyModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
     const [urlForm, setUrlForm] = useState({
         url: '',
         name: '',
-        enableStats: 'Không',
+        enableStats: 'Không'
     });
-    const fileInputRef = useRef(null);
-    const [setSelectedFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [duration, setDuration] = useState(10); // Default duration for images
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
+    const [copyIcon, setCopyIcon] = useState(faCopy);
 
-    // Chọn cột hiển thị cho bảng
+    const [uiFilters, setUiFilters] = useState({
+        _id: '',
+        name: '',
+        type: '',
+        isActive: '',
+    });
+
+    const [queryFilters, setQueryFilters] = useState({
+        _id: '',
+        name: '',
+        type: '',
+        isActive: '',
+    });
+
+    // Sử dụng queryFilters thay vì filters cho useContents
+    const { data, isLoading, isError, error, refetch } = useContents(queryFilters);
+    const uploadContentMutation = useUploadContent();
+    const deleteContentMutation = useDeleteContent();
+
+    // Tạo debounced function để cập nhật query filters
+    const debouncedSetQueryFilters = useMemo(
+        () =>
+            debounce((filters) => {
+                setQueryFilters(filters);
+            }, 500),
+        [],
+    );
+
+    // Handler cho việc thay đổi giá trị filter
+    const handleFilterChange = useCallback(
+        (e) => {
+            const { name, value } = e.target;
+
+            // Luôn cập nhật UI ngay lập tức
+            const newFilters = {
+                ...uiFilters,
+                [name]: value,
+            };
+            setUiFilters(newFilters);
+
+            // Đối với select boxes, cập nhật query ngay lập tức
+            if (name === 'type' || name === 'isActive') {
+                setQueryFilters(newFilters);
+            }
+            // Đối với input text, sử dụng debounce
+            else {
+                debouncedSetQueryFilters(newFilters);
+            }
+        },
+        [uiFilters, debouncedSetQueryFilters],
+    );
+
+    const contents = useMemo(
+        () =>
+            data?.data?.contents.map((content) => ({
+                ID: content._id,
+                Tên: content.name,
+                'Thể loại': content.type,
+                Tag: '',
+                Ảnh: content.url,
+                'Thời lượng': content.duration || '00:00:00',
+                'Kích cỡ': content.metadata?.size || '',
+                'Chủ sở hữu': content.createdBy?.username || '',
+            })) || [],
+        [data],
+    );
+
+    // Replace handleRefresh with refetch from useQuery
+    const handleRefresh = () => {
+        refetch();
+    };
+
     const toggleColumn = (col) => {
         setVisibleColumns((prev) => {
             if (prev.includes(col)) {
@@ -76,7 +122,7 @@ function PlayContent() {
             setSelectedRows([]);
             setAllSelected(false);
         } else {
-            const allIndexes = mockData.map((_, index) => index);
+            const allIndexes = contents.map((_, index) => index);
             setSelectedRows(allIndexes);
             setAllSelected(true);
         }
@@ -84,20 +130,43 @@ function PlayContent() {
 
     // Chỉ chọn 1 hàng
     const handleRowClick = (index) => {
-        // Nếu hàng đó đã được chọn → bỏ chọn
-        if (selectedRows.length === 1 && selectedRows[0] === index) {
-            setSelectedRows([]);
-            setAllSelected(false);
-        } else {
-            setSelectedRows([index]);
-            setAllSelected(false);
-        }
+        setSelectedRows((prev) => {
+            // Nếu đã chọn thì bỏ chọn
+            if (prev.includes(index)) {
+                return prev.filter((i) => i !== index);
+            }
+            // Nếu chưa chọn thì thêm vào danh sách
+            return [...prev, index];
+        });
+        setAllSelected(false);
     };
 
-    const handleFileSelect = (event) => {
+    const getMediaDuration = (file) => {
+        return new Promise((resolve) => {
+            // Xử lý cho video và audio
+            if (file.type.startsWith('video/') || file.type.startsWith('audio/')) {
+                const media = document.createElement(file.type.startsWith('video/') ? 'video' : 'audio');
+                media.preload = 'metadata';
+
+                media.onloadedmetadata = () => {
+                    window.URL.revokeObjectURL(media.src);
+                    resolve(Math.round(media.duration));
+                };
+
+                media.src = URL.createObjectURL(file);
+            } else {
+                // Với ảnh và các file khác, dùng duration mặc định
+                resolve(10);
+            }
+        });
+    };
+
+    const handleFileSelect = async (event) => {
         const file = event.target.files[0];
         if (file) {
             setSelectedFile(file);
+            const mediaDuration = await getMediaDuration(file);
+            setDuration(mediaDuration);
         }
     };
 
@@ -105,16 +174,46 @@ function PlayContent() {
         event.preventDefault();
     };
 
-    const handleDrop = (event) => {
+    const handleDrop = async (event) => {
         event.preventDefault();
         const file = event.dataTransfer.files[0];
         if (file) {
             setSelectedFile(file);
+            const mediaDuration = await getMediaDuration(file);
+            setDuration(mediaDuration);
         }
     };
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
+    };
+
+    // Update handleUpload to use mutation
+    const handleUpload = async () => {
+        if (!selectedFile) {
+            setUploadError('Vui lòng chọn file để tải lên');
+            return;
+        }
+
+        try {
+            setIsUploading(true);
+            setUploadError(null);
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('name', selectedFile.name);
+            formData.append('type', selectedFile.type.split('/')[0]);
+            formData.append('duration', duration.toString());
+
+            await uploadContentMutation.mutateAsync(formData);
+            setShowAddContentModal(false);
+            setSelectedFile(null);
+            setDuration(10);
+        } catch (error) {
+            setUploadError(error.response?.data?.message || 'Có lỗi xảy ra khi tải lên file');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const AddContentModal = () => {
@@ -131,14 +230,20 @@ function PlayContent() {
                     </div>
                     <div className={cx('modal-body')}>
                         <div
-                            className={cx('upload-area')}
+                            className={cx('upload-area', { 'has-file': selectedFile })}
                             onClick={handleUploadClick}
                             onDragOver={handleDragOver}
                             onDrop={handleDrop}
                         >
                             <FontAwesomeIcon icon={faFileUpload} className={cx('upload-icon')} />
-                            <p>Kéo và thả tệp vào đây hoặc click để chọn tệp</p>
-                            <p className={cx('file-size-limit')}>Biểu mẫu này chấp nhận tệp tối đa 2G</p>
+                            {selectedFile ? (
+                                <p>File đã chọn: {selectedFile.name}</p>
+                            ) : (
+                                <>
+                                    <p>Kéo và thả tệp vào đây hoặc click để chọn tệp</p>
+                                    <p className={cx('file-size-limit')}>Biểu mẫu này chấp nhận tệp tối đa 2G</p>
+                                </>
+                            )}
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -146,12 +251,24 @@ function PlayContent() {
                                 style={{ display: 'none' }}
                             />
                         </div>
+                        {uploadError && <div className={cx('error-message')}>{uploadError}</div>}
                         <div className={cx('buttons-group')}>
-                            <button>
+                            <button
+                                onClick={handleUpload}
+                                disabled={isUploading || !selectedFile}
+                                className={cx('upload-button')}
+                            >
                                 <FontAwesomeIcon icon={faUpload} />
-                                Bắt đầu tải lên
+                                {isUploading ? 'Đang tải lên...' : 'Bắt đầu tải lên'}
                             </button>
-                            <button className={cx('cancel')}>
+                            <button
+                                className={cx('cancel')}
+                                onClick={() => {
+                                    setSelectedFile(null);
+                                    setShowAddContentModal(false);
+                                }}
+                                disabled={isUploading}
+                            >
                                 <FontAwesomeIcon icon={faTimes} />
                                 Hủy tải lên
                             </button>
@@ -163,21 +280,20 @@ function PlayContent() {
     };
 
     const URLContentModal = () => {
-        if (!showUrlModal) return null;
+        const { register, handleSubmit, formState: { errors } } = useForm({
+            defaultValues: {
+                url: '',
+                name: '',
+                enableStats: 'Không'
+            }
+        });
 
-        const handleUrlFormChange = (e) => {
-            const { name, value } = e.target;
-            setUrlForm((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
-        };
-
-        const handleSubmit = () => {
-            // Xử lý submit form
-            console.log('URL Form Data:', urlForm);
+        const onSubmit = (data) => {
+            console.log('Form submitted:', data);
             setShowUrlModal(false);
         };
+
+        if (!showUrlModal) return null;
 
         return (
             <div className={cx('modal-overlay')}>
@@ -188,31 +304,30 @@ function PlayContent() {
                             <FontAwesomeIcon icon={faTimes} />
                         </button>
                     </div>
-                    <div className={cx('url-modal-body')}>
+                    <form onSubmit={handleSubmit(onSubmit)} className={cx('url-modal-body')}>
                         <div className={cx('form-group')}>
                             <label>URL</label>
                             <input
                                 type="text"
-                                name="url"
-                                value={urlForm.url}
-                                onChange={handleUrlFormChange}
+                                {...register('url', { required: 'URL là bắt buộc' })}
                                 placeholder="Vui lòng nhập URL của tệp cần lấy từ xa"
+                                className={cx('form-input')}
                             />
+                            {errors.url && <p className={cx('error-message')}>{errors.url.message}</p>}
                             <p className={cx('help-text')}>Biểu mẫu này chấp nhận tệp tối đa 2G</p>
                         </div>
                         <div className={cx('form-group')}>
                             <label>Tên</label>
                             <input
                                 type="text"
-                                name="name"
-                                value={urlForm.name}
-                                onChange={handleUrlFormChange}
+                                {...register('name')}
                                 placeholder="Tên Nội Dung tùy chọn, nếu để trống mặc định sẽ là tên tệp"
+                                className={cx('form-input')}
                             />
                         </div>
                         <div className={cx('form-group')}>
                             <label>Bật tính năng thống kê phát cho nội dung này?</label>
-                            <select name="enableStats" value={urlForm.enableStats} onChange={handleUrlFormChange}>
+                            <select {...register('enableStats')} className={cx('form-select')}>
                                 <option value="Không">Không</option>
                                 <option value="Có">Có</option>
                             </select>
@@ -221,15 +336,15 @@ function PlayContent() {
                                 'Enable Stats Collection' is set to 'On' in the Display Settings.
                             </p>
                         </div>
-                    </div>
-                    <div className={cx('url-modal-footer')}>
-                        <button className={cx('cancel')} onClick={() => setShowUrlModal(false)}>
-                            Hủy
-                        </button>
-                        <button className={cx('save')} onClick={handleSubmit}>
-                            Lưu
-                        </button>
-                    </div>
+                        <div className={cx('url-modal-footer')}>
+                            <button type="button" className={cx('cancel')} onClick={() => setShowUrlModal(false)}>
+                                Hủy
+                            </button>
+                            <button type="submit" className={cx('save')}>
+                                Lưu
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         );
@@ -238,10 +353,21 @@ function PlayContent() {
     const TidyModal = () => {
         if (!showTidyModal) return null;
 
-        const handleConfirm = () => {
-            // Xử lý logic dọn dẹp thư viện
-            console.log('Cleaning library...');
-            setShowTidyModal(false);
+        const handleConfirm = async () => {
+            try {
+                setDeleteError(null);
+                const promises = selectedRows.map((idx) => {
+                    const contentId = contents[idx].ID;
+                    return deleteContentMutation.mutateAsync(contentId);
+                });
+
+                await Promise.all(promises);
+                setShowTidyModal(false);
+                setSelectedRows([]); // Clear selection after delete
+                setAllSelected(false);
+            } catch (err) {
+                setDeleteError(err.response?.data?.message || 'Có lỗi xảy ra khi xóa nội dung');
+            }
         };
 
         return (
@@ -255,19 +381,87 @@ function PlayContent() {
                     </div>
                     <div className={cx('tidy-modal-body')}>
                         <div className={cx('message')}>
-                            <div>Dọn thư viện sẽ xóa những nội dung không sử dụng.</div>
+                            <div>Dọn thư viện sẽ xóa những nội dung đã chọn.</div>
                             <div className={cx('data-info')}>
-                                There is 812.31 KiB of data stored in 1 files . Are you sure you want to proceed?
+                                Bạn đã chọn {selectedRows.length} nội dung. Bạn có chắc chắn muốn xóa?
                             </div>
+                            {deleteError && <div className={cx('deleteError-message')}>{deleteError}</div>}
                         </div>
                     </div>
                     <div className={cx('tidy-modal-footer')}>
-                        <button className={cx('cancel')} onClick={() => setShowTidyModal(false)}>
+                        <button
+                            className={cx('cancel')}
+                            onClick={() => setShowTidyModal(false)}
+                            disabled={deleteContentMutation.isPending}
+                        >
                             Hủy
                         </button>
-                        <button className={cx('confirm')} onClick={handleConfirm}>
-                            Lưu
+                        <button
+                            className={cx('confirm')}
+                            onClick={handleConfirm}
+                            disabled={deleteContentMutation.isPending || selectedRows.length === 0}
+                        >
+                            {deleteContentMutation.isPending ? 'Đang xóa...' : 'Xóa'}
                         </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const handleShare = () => {
+        setShowShareModal(true);
+    };
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(window.location.href)
+            .then(() => {
+                setCopyIcon(faCheck);
+                setTimeout(() => setCopyIcon(faCopy), 2000);
+            })
+            .catch(() => {
+                // Xử lý lỗi nếu cần
+            });
+    };
+
+    const handleFacebookShare = () => {
+        const url = encodeURIComponent(window.location.href);
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    };
+
+    /*const handleTelegramShare = () => {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent('Xem nội dung này trên nền tảng của chúng tôi:');
+        window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+    };*/
+
+    const ShareModal = () => {
+        if (!showShareModal) return null;
+
+        return (
+            <div className={cx('modal-overlay')}>
+                <div className={cx('share-modal')}>
+                    <div className={cx('share-modal-header')}>
+                        <h2>Chia sẻ</h2>
+                        <button className={cx('close-button')} onClick={() => setShowShareModal(false)}>
+                            <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                    </div>
+                    <div className={cx('share-modal-body')}>
+                        <div className={cx('share-buttons')}>
+                            <button className={cx('share-button', 'facebook')} onClick={handleFacebookShare}>
+                                <FontAwesomeIcon icon={faShare} />
+                                Chia sẻ qua Facebook
+                            </button>
+                            {/*<button className={cx('share-button', 'telegram')} onClick={handleTelegramShare}>
+                                <FontAwesomeIcon icon={faShare} />
+                                Chia sẻ qua Telegram
+                            </button>*/}
+                            <button className={cx('share-button', 'copy')} onClick={handleCopyLink}>
+                                <FontAwesomeIcon icon={copyIcon} />
+                                Sao chép link
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -291,58 +485,38 @@ function PlayContent() {
                         <FontAwesomeIcon icon={faTrash} />
                         Tidy Library
                     </button>
-                    <button className={cx('refresh')}>
-                        <FontAwesomeIcon icon={faSync} />
+                    <button className={cx('refresh')} onClick={handleRefresh} disabled={isLoading}>
+                        <FontAwesomeIcon icon={faSync} spin={isLoading} />
                     </button>
                 </div>
             </div>
 
+            {isError && <div className={cx('error-message')}>{error?.message || 'Có lỗi xảy ra khi tải dữ liệu'}</div>}
+
             <div className={cx('filter-bar')}>
                 <div className={cx('filter-group')}>
                     <label>ID</label>
-                    <input type="text" />
+                    <input type="text" name="_id" value={uiFilters._id} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
-                    <label>Tên</label>
-                    <input type="text" />
-                </div>
-                <div className={cx('filter-group')}>
-                    <label>Chủ sở hữu</label>
-                    <input type="text" />
-                </div>
-                <div className={cx('filter-group')}>
-                    <label>Nhóm người dùng sở hữu</label>
-                    <select>
-                        <option></option>
-                        <option>Content Manager</option>
-                        <option>Display Manager</option>
-                        <option>Playlist Manager</option>
-                        <option>Schedule Manager</option>
-                        <option>Users</option>
-                    </select>
+                    <label>T��n</label>
+                    <input type="text" name="name" value={uiFilters.name} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
                     <label>Thể loại</label>
-                    <select>
-                        <option></option>
-                        <option>Âm thanh</option>
-                        <option>Gói HTML</option>
-                        <option>Ảnh</option>
-                        <option>PDF</option>
-                        <option>Phim</option>
-                        <option>Điểm điện (PPT, PPS)</option>
+                    <select name="type" value={uiFilters.type} onChange={handleFilterChange}>
+                        <option value="">Tất cả</option>
+                        <option value="image">Ảnh</option>
+                        <option value="video">Video</option>
                     </select>
                 </div>
                 <div className={cx('filter-group')}>
                     <label>Ngưng sử dụng</label>
-                    <select>
-                        <option>Không</option>
-                        <option>Có</option>
+                    <select name="isActive" value={uiFilters.isActive} onChange={handleFilterChange}>
+                        <option value="">Tất cả</option>
+                        <option value="true">Không</option>
+                        <option value="false">Có</option>
                     </select>
-                </div>
-                <div className={cx('filter-group')}>
-                    <label>ID bố cục</label>
-                    <input type="text" />
                 </div>
             </div>
 
@@ -393,7 +567,7 @@ function PlayContent() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockData.map((row, rowIdx) => (
+                                {contents.map((row, rowIdx) => (
                                     <tr
                                         key={rowIdx}
                                         onClick={() => handleRowClick(rowIdx)}
@@ -414,7 +588,9 @@ function PlayContent() {
                         <button className={cx('choose')} onClick={handleSelectAll}>
                             Chọn tất cả
                         </button>
-                        <button className={cx('share')}>Share</button>
+                        <button className={cx('share')} onClick={handleShare}>
+                            <FontAwesomeIcon icon={faShare} /> Share
+                        </button>
                         <span>Showing 1 to 2 of 2 entries</span>
                     </div>
                     <div className={cx('right')}>
@@ -426,6 +602,7 @@ function PlayContent() {
             <AddContentModal />
             <URLContentModal />
             <TidyModal />
+            <ShareModal />
         </div>
     );
 }

@@ -5,12 +5,24 @@ export const useLogin = () => {
     return useMutation({
         mutationFn: async (credentials) => {
             const { data } = await axiosInstance.post('/auth/login', credentials);
+            const dataRes = data.data;
+            console.log('Login response data:', data);
+
             // Lưu token vào localStorage
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+            if (dataRes.token) {
+                console.log('Saving token to localStorage:', dataRes.token);
+                localStorage.setItem('token', dataRes.token);
+                localStorage.setItem('user', JSON.stringify(dataRes.user));
+
+                // Verify if dataRes was saved
+                const savedToken = localStorage.getItem('token');
+                const savedUser = localStorage.getItem('user');
+                console.log('Verified saved token:', savedToken);
+                console.log('Verified saved user:', savedUser);
+            } else {
+                console.warn('No token received in response');
             }
-            return data;
+            return dataRes;
         },
     });
 };
@@ -28,6 +40,6 @@ export const useLogout = () => {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
             }
-        }
+        },
     });
 };
