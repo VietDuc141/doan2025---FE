@@ -24,15 +24,6 @@ export const useCampaigns = (filters = {}) => {
         },
     });
 };
-export const useContentList = () => {
-    return useQuery({
-        queryKey: ['content-list', 'content'],
-        queryFn: async () => {
-            const response = await instance.get('/content', {});
-            return response.data;
-        },
-    });
-};
 
 export const useUploadCampaign = () => {
     const queryClient = useQueryClient();

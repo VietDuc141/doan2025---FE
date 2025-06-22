@@ -114,3 +114,18 @@ export const useOnlineUsersCount = () => {
         staleTime: 10 * 1000,
     });
 };
+
+export const useActiveUser = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id) => {
+            const response = await instance.put(`/users/${id}/status`);
+            return response.data;
+        },
+        onSuccess: () => {
+            // Invalidate contents query to refetch
+            queryClient.invalidateQueries(userKeys.lists());
+        },
+    });
+};

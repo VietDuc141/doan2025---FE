@@ -2,10 +2,14 @@ import classNames from 'classnames/bind';
 import styles from './Campaign.module.scss';
 import { useCallback, useMemo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faSync, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { useCampaigns } from '~/api/queries/campaignQueries';
+import { faXmark, faSync, faPlus, faTrash, faTimes, faShare, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { useCampaigns, useContentList, useDeleteCampaign, useUploadCampaign } from '~/api/queries/campaignQueries';
 import { debounce } from 'lodash';
 import dayjs from 'dayjs';
+import { useForm } from 'react-hook-form';
+import Select from 'react-select';
+import { Controller } from 'react-hook-form';
+import { toast } from 'react-toastify';
 
 const cx = classNames.bind(styles);
 
@@ -19,10 +23,8 @@ const allColumns = [
     'Thời lượng',
     'Phát lại theo chu kỳ',
     'Số lần phát',
-    'Loại mục tiêu',
     'Mục tiêu',
-    'Phát',
-    'Lượt hiển thị',
+    'Thứ tự phát trong danh sách',
 ];
 
 function Campaign() {
@@ -35,11 +37,18 @@ function Campaign() {
         'Thời lượng',
         'Phát lại theo chu kỳ',
         'Số lần phát',
+        'Mục tiêu',
     ]);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [showModal, setShowModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const [allSelected, setAllSelected] = useState(false);
+    const [showUrlModal, setShowUrlModal] = useState(false);
+    const [showTidyModal, setShowTidyModal] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [copyIcon, setCopyIcon] = useState(faCopy);
 
     const typeOptions = [
         { value: 'layout_list', label: 'Danh sách bố cục' },
@@ -51,27 +60,20 @@ function Campaign() {
         { value: 'sequential', label: 'Chặn' },
     ];
 
+    const frequencyOptions = [
+        { value: 'once', label: 'Phát một lần' },
+        { value: 'daily', label: 'Phát hàng ngày' },
+        { value: 'weekly', label: 'Phát hàng tuần' },
+        { value: 'monthly', label: 'Phát hàng tháng' },
+    ];
+
     const [uiFilters, setUiFilters] = useState({
-        _id: '',
         name: '',
-        description: '',
-        isActive: '',
-    });
-
-    const [queryFilters, setQueryFilters] = useState({
+        content: '',
         _id: '',
-        name: '',
-        description: '',
-        isActive: '',
+        type: '',
+        frequency: '',
     });
-
-    const debouncedSetQueryFilters = useMemo(
-        () =>
-            debounce((filters) => {
-                setQueryFilters(filters);
-            }, 500),
-        [],
-    );
 
     // Handler cho việc thay đổi giá trị filter
     const handleFilterChange = useCallback(
@@ -84,26 +86,26 @@ function Campaign() {
                 [name]: value,
             };
             setUiFilters(newFilters);
-
-            // Đối với select boxes, cập nhật query ngay lập tức
-            if (name === 'isActive') {
-                setQueryFilters(newFilters);
-            }
-            // Đối với input text, sử dụng debounce
-            else {
-                debouncedSetQueryFilters(newFilters);
-            }
         },
-        [uiFilters, debouncedSetQueryFilters],
+        [uiFilters],
     );
 
-    const { data, isLoading, isError, error, refetch } = useCampaigns(queryFilters);
+    const { data, isLoading, isError, error, refetch } = useCampaigns();
+    const deleteCampaignMutation = useDeleteCampaign();
+
+    const handleRefresh = () => {
+        setSelectedRows([]);
+        setAllSelected(false);
+        setUiFilters({ name: '', content: '', _id: '', type: '', frequency: '' }); // reset nếu muốn
+        refetch(); // gọi lại API
+    };
 
     const campaigns = useMemo(
         () =>
             data?.data?.campaigns.map((campaign) => ({
                 Tên: campaign.name,
-                'Thể loại': campaign.description,
+                ID: campaign._id,
+                'Thể loại': typeOptions.find((opt) => opt.value === campaign.type)?.label || '',
                 'Ngày bắt đầu': campaign?.schedule?.startDate
                     ? dayjs(campaign.schedule.startDate).format('DD/MM/YYYY HH:mm:ss')
                     : '',
@@ -117,20 +119,17 @@ function Campaign() {
                     campaign.contents?.length > 0
                         ? campaign.contents.reduce((sum, item) => sum + (item.duration || 0), 0)
                         : 0,
-                'Phát lại theo chu kỳ': campaign.schedule.frequency,
+                'Phát lại theo chu kỳ':
+                    frequencyOptions.find((opt) => opt.value === campaign.schedule.frequency)?.label || '',
                 'Số lần phát': campaign.priority,
-                'Loại mục tiêu': '',
-                'Mục tiêu': '',
+                'Thứ tự phát trong danh sách':
+                    orderOptions.find((opt) => opt.value === campaign.playOrder)?.label || '',
+                'Mục tiêu': campaign.description,
                 Phát: '',
                 'Lượt hiển thị': '',
             })) || [],
         [data],
     );
-
-    // Replace handleRefresh with refetch from useQuery
-    const handleRefresh = () => {
-        refetch();
-    };
 
     // Chọn cột hiển thị cho bảng
     const toggleColumn = (col) => {
@@ -158,14 +157,343 @@ function Campaign() {
 
     // Chỉ chọn 1 hàng
     const handleRowClick = (index) => {
-        // Nếu hàng đó đã được chọn → bỏ chọn
-        if (selectedRows.length === 1 && selectedRows[0] === index) {
-            setSelectedRows([]);
-            setAllSelected(false);
-        } else {
-            setSelectedRows([index]);
-            setAllSelected(false);
-        }
+        setSelectedRows((prev) => {
+            // Nếu đã chọn thì bỏ chọn
+            if (prev.includes(index)) {
+                return prev.filter((i) => i !== index);
+            }
+            // Nếu chưa chọn thì thêm vào danh sách
+            return [...prev, index];
+        });
+        setAllSelected(false);
+    };
+
+    const URLContentModal = () => {
+        const getContentListMutation = useContentList();
+        const uploadCampaignMutation = useUploadCampaign();
+        const {
+            register,
+            handleSubmit,
+            control,
+            formState: { errors },
+        } = useForm({
+            defaultValues: {
+                url: '',
+                name: '',
+                enableStats: 'Không',
+                labels: [],
+                startDate: '',
+                endDate: '',
+                frequency: 'daily',
+                playOrder: '',
+                priority: 0,
+            },
+        });
+
+        const onSubmit = async (formData) => {
+            try {
+                const payload = {
+                    name: formData.name,
+                    type: formData.type,
+                    description: formData.description, // giống tên ở ví dụ của bạn
+                    playOrder: formData.playOrder,
+                    contents: formData.labels.map((item, idx) => ({
+                        contentId: item.value, // nếu react-select dùng content._id làm value
+                        order: idx,
+                        duration: 1, // mặc định hoặc cho chọn thêm trong form
+                    })),
+                    schedule: {
+                        startDate: formData.startDate,
+                        endDate: formData.endDate,
+                        frequency: formData.frequency,
+                        timeSlots: [
+                            {
+                                dayOfWeek: 1,
+                                startTime: '00:00',
+                                endTime: '12:00',
+                            },
+                        ],
+                    },
+                    isActive: true,
+                    priority: formData.priority || 0,
+                    assignedScreens: formData.assignedScreens || [],
+                };
+                const result = await uploadCampaignMutation.mutateAsync(payload);
+                if (result.status === 'success') {
+                    toast.success('Tạo đợi phát thành công!');
+                }
+                setShowUrlModal(false);
+            } catch (err) {
+                console.error('Error uploading campaign:', err);
+                toast.error('Tạo đợi phát thất bại!');
+            }
+        };
+
+        if (!showUrlModal) return null;
+
+        return (
+            <>
+                <div className={cx('modal')}>
+                    <div className={cx('modal-overlay')} onClick={() => setShowUrlModal(false)} />
+                    <div className={cx('modal-content')}>
+                        <div className={cx('modal-header')}>
+                            <h3>Thêm Đợt Phát</h3>
+                            <button className={cx('close')} onClick={() => setShowUrlModal(false)}>
+                                <FontAwesomeIcon icon={faXmark} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit(onSubmit)} className={cx('url-modal-body')}>
+                            <div className={cx('modal-body')}>
+                                <div className={cx('form-group')}>
+                                    <label>Thể loại</label>
+                                    <select {...register('type')}>
+                                        <option value="">Chọn thể loại</option>
+                                        {typeOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <small>Bạn muốn tạo loại đợt phát nào?</small>
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Tên</label>
+                                    <input type="text" placeholder="Nhập tên đợt phát" {...register('name')} />
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Mục tiêu</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Nhập mục tiêu đợt phát"
+                                        {...register('description')}
+                                    />
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Nhãn</label>
+                                    <Controller
+                                        control={control}
+                                        name="labels"
+                                        render={({ field }) => (
+                                            <Select
+                                                {...field}
+                                                isMulti
+                                                options={getContentListMutation?.data?.data?.contents?.map((item) => ({
+                                                    value: item._id,
+                                                    label: item.name,
+                                                }))}
+                                                placeholder="Chọn một hoặc nhiều nhãn"
+                                                classNamePrefix="react-select"
+                                            />
+                                        )}
+                                    />
+                                    <small>
+                                        Nhãn cho đợt phát này - Chọn một hoặc nhiều nội dung làm nhãn từ danh sách.
+                                    </small>
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Thứ tự phát trong danh sách</label>
+                                    <select {...register('playOrder')}>
+                                        <option value="">Chọn thứ tự phát</option>
+                                        {orderOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <small>
+                                        Khi đợt phát này được lên lịch cùng với một đợt phát khác có cùng thứ tự hiển
+                                        thị, thì các bố cục của cả hai chiến dịch sẽ được sắp xếp theo thứ tự như thế
+                                        nào?
+                                    </small>
+                                </div>
+                                <div className={cx('form-group')}>
+                                    <label>Ngày bắt đầu</label>
+                                    <input type="datetime-local" {...register('startDate')} />
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Ngày kết thúc</label>
+                                    <input type="datetime-local" {...register('endDate')} />
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Phát lại theo chu kỳ</label>
+                                    <select {...register('frequency')}>
+                                        <option value="daily">Hàng ngày</option>
+                                        <option value="weekly">Hàng tuần</option>
+                                        <option value="monthly">Hàng tháng</option>
+                                        <option value="once">Một lần</option>
+                                    </select>
+                                </div>
+
+                                <div className={cx('form-group')}>
+                                    <label>Số lần phát</label>
+                                    <input type="number" min={0} {...register('priority', { valueAsNumber: true })} />
+                                </div>
+                            </div>
+
+                            <div className={cx('modal-footer')}>
+                                <button className={cx('cancel')} onClick={() => setShowUrlModal(false)}>
+                                    Hủy
+                                </button>
+                                <button className={cx('submit')}>Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </>
+        );
+    };
+
+    const TidyModal = () => {
+        if (!showTidyModal) return null;
+
+        const handleConfirm = async () => {
+            try {
+                setDeleteError(null);
+                const promises = selectedRows.map((idx) => {
+                    const campaignId = campaigns[idx].ID;
+                    return deleteCampaignMutation.mutateAsync(campaignId);
+                });
+
+                await Promise.all(promises);
+                setShowTidyModal(false);
+                setSelectedRows([]); // Clear selection after delete
+                setAllSelected(false);
+            } catch (err) {
+                setDeleteError(err.response?.data?.message || 'Có lỗi xảy ra khi xóa nội dung');
+            }
+        };
+
+        return (
+            <div className={cx('modal')}>
+                <div className={cx('modal-overlay')}>
+                    <div className={cx('tidy-modal')}>
+                        <div className={cx('tidy-modal-header')}>
+                            <h2>Tidy Library</h2>
+                            <button className={cx('close-button')} onClick={() => setShowTidyModal(false)}>
+                                <FontAwesomeIcon icon={faTimes} />
+                            </button>
+                        </div>
+                        <div className={cx('tidy-modal-body')}>
+                            <div className={cx('message')}>
+                                <div>Dọn thư viện sẽ xóa những nội dung đã chọn.</div>
+                                <div className={cx('data-info')}>
+                                    Bạn đã chọn {selectedRows.length} nội dung. Bạn có chắc chắn muốn xóa?
+                                </div>
+                                {deleteError && <div className={cx('deleteError-message')}>{deleteError}</div>}
+                            </div>
+                        </div>
+                        <div className={cx('tidy-modal-footer')}>
+                            <button
+                                className={cx('cancel')}
+                                onClick={() => setShowTidyModal(false)}
+                                disabled={deleteCampaignMutation.isPending}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className={cx('confirm')}
+                                onClick={handleConfirm}
+                                disabled={deleteCampaignMutation.isPending || selectedRows.length === 0}
+                            >
+                                {deleteCampaignMutation.isPending ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const filteredCampaigns = campaigns.filter(
+        (campaign) => {
+            const nameMatch = campaign['Tên'].toLowerCase().includes(uiFilters.name.toLowerCase());
+            const labelMatch = campaign['Nhãn'].toLowerCase().includes(uiFilters.content.toLowerCase());
+            const idMatch = campaign['# Bố cục'].toLowerCase().includes(uiFilters._id.toLowerCase());
+            const typeMatch = uiFilters.type
+                ? campaign['Thể loại'] === typeOptions.find((t) => t.value === uiFilters.type)?.label
+                : true;
+            const frequencyMatch = uiFilters.frequency
+                ? campaign['Phát lại theo chu kỳ'] ===
+                  frequencyOptions.find((f) => f.value === uiFilters.frequency)?.label
+                : true;
+
+            return nameMatch && labelMatch && idMatch && typeMatch && frequencyMatch;
+        },
+        [campaigns, uiFilters],
+    );
+
+    const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+
+    const paginatedCampaigns = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        return filteredCampaigns.slice(start, end);
+    }, [filteredCampaigns, currentPage, itemsPerPage]);
+
+    const handleShare = () => {
+        setShowShareModal(true);
+    };
+
+    const handleCopyLink = () => {
+        navigator.clipboard
+            .writeText(window.location.href)
+            .then(() => {
+                setCopyIcon(faCheck);
+                setTimeout(() => setCopyIcon(faCopy), 2000);
+            })
+            .catch(() => {
+                // Xử lý lỗi nếu cần
+            });
+    };
+
+    const handleFacebookShare = () => {
+        const url = encodeURIComponent(window.location.href);
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    };
+
+    /*const handleTelegramShare = () => {
+            const url = encodeURIComponent(window.location.href);
+            const text = encodeURIComponent('Xem nội dung này trên nền tảng của chúng tôi:');
+            window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+        };*/
+
+    const ShareModal = () => {
+        if (!showShareModal) return null;
+
+        return (
+            <div className={cx('modal-overlay')}>
+                <div className={cx('share-modal')}>
+                    <div className={cx('share-modal-header')}>
+                        <h2>Chia sẻ</h2>
+                        <button className={cx('close-button')} onClick={() => setShowShareModal(false)}>
+                            <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                    </div>
+                    <div className={cx('share-modal-body')}>
+                        <div className={cx('share-buttons')}>
+                            <button className={cx('share-button', 'facebook')} onClick={handleFacebookShare}>
+                                <FontAwesomeIcon icon={faShare} />
+                                Chia sẻ qua Facebook
+                            </button>
+                            {/*<button className={cx('share-button', 'telegram')} onClick={handleTelegramShare}>
+                                    <FontAwesomeIcon icon={faShare} />
+                                    Chia sẻ qua Telegram
+                                </button>*/}
+                            <button className={cx('share-button', 'copy')} onClick={handleCopyLink}>
+                                <FontAwesomeIcon icon={copyIcon} />
+                                Sao chép link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -173,10 +501,20 @@ function Campaign() {
             <div className={cx('header')}>
                 <h2>Đợt phát</h2>
                 <div className={cx('actions')}>
-                    <button className={cx('refresh')}>
+                    <button
+                        className={cx('refresh', { spinning: isLoading })}
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        title="Làm mới danh sách"
+                    >
                         <FontAwesomeIcon icon={faSync} />
                     </button>
-                    <button className={cx('add')} onClick={() => setShowModal(true)}>
+
+                    <button className={cx('clean')} onClick={() => setShowTidyModal(true)}>
+                        <FontAwesomeIcon icon={faTrash} />
+                        Tidy Library
+                    </button>
+                    <button className={cx('add')} onClick={() => setShowUrlModal(true)}>
                         <FontAwesomeIcon icon={faPlus} /> Thêm đợt phát
                     </button>
                 </div>
@@ -185,30 +523,36 @@ function Campaign() {
             <div className={cx('filter-bar')}>
                 <div className={cx('filter-group')}>
                     <label>Tên</label>
-                    <input type="text" />
+                    <input type="text" name="name" value={uiFilters.name} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
                     <label>Nhãn</label>
-                    <input type="text" />
+                    <input type="text" name="content" value={uiFilters.content} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
                     <label>ID bố cục</label>
-                    <input type="number" />
+                    <input type="text" name="_id" value={uiFilters._id} onChange={handleFilterChange} />
                 </div>
                 <div className={cx('filter-group')}>
                     <label>Thể loại</label>
-                    <select>
+                    <select name="type" value={uiFilters.type} onChange={handleFilterChange}>
                         <option></option>
-                        <option>Danh sách bố cục</option>
-                        <option>Đợt phát quảng cáo</option>
+                        {typeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
                 <div className={cx('filter-group')}>
                     <label>Phát lại theo chu kỳ</label>
-                    <select>
+                    <select name="frequency" value={uiFilters.frequency} onChange={handleFilterChange}>
                         <option></option>
-                        <option>Tắt</option>
-                        <option>Bật</option>
+                        {frequencyOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
             </div>
@@ -217,11 +561,17 @@ function Campaign() {
                 <div className={cx('table-controls')}>
                     <div className={cx('entries')}>
                         Show
-                        <select>
-                            <option>10</option>
-                            <option>25</option>
-                            <option>50</option>
-                            <option>100</option>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1); // reset về trang đầu
+                            }}
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
                         </select>
                         entries
                     </div>
@@ -260,7 +610,7 @@ function Campaign() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {campaigns.map((row, rowIdx) => (
+                                {paginatedCampaigns.map((row, rowIdx) => (
                                     <tr
                                         key={rowIdx}
                                         onClick={() => handleRowClick(rowIdx)}
@@ -281,82 +631,38 @@ function Campaign() {
                         <button className={cx('choose')} onClick={handleSelectAll}>
                             Chọn tất cả
                         </button>
-                        <button className={cx('share')}>Share</button>
-                        <span>Showing 1 to 2 of 2 entries</span>
+                        <button className={cx('share')} onClick={handleShare}>
+                            <FontAwesomeIcon icon={faShare} /> Share
+                        </button>
+                        <span>
+                            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                            {Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} of{' '}
+                            {filteredCampaigns.length} entries
+                        </span>
                     </div>
                     <div className={cx('right')}>
-                        <button>Trước</button>
-                        <button>Tiếp</button>
+                        <span>
+                            Trang {currentPage} / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Trước
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Tiếp
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {showModal && (
-                <div className={cx('modal')}>
-                    <div className={cx('modal-overlay')} onClick={() => setShowModal(false)} />
-                    <div className={cx('modal-content')}>
-                        <div className={cx('modal-header')}>
-                            <h3>Thêm Đợt Phát</h3>
-                            <button className={cx('close')} onClick={() => setShowModal(false)}>
-                                <FontAwesomeIcon icon={faXmark} />
-                            </button>
-                        </div>
-                        <div className={cx('modal-body')}>
-                            <div className={cx('form-group')}>
-                                <label>Thể loại</label>
-                                <select>
-                                    <option value="">Chọn thể loại</option>
-                                    {typeOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <small>Bạn muốn tạo loại đợt phát nào?</small>
-                            </div>
-
-                            <div className={cx('form-group')}>
-                                <label>Tên</label>
-                                <input type="text" placeholder="Nhập tên đợt phát" />
-                                <small>Tên cho đợt phát này</small>
-                            </div>
-
-                            <div className={cx('form-group')}>
-                                <label>Nhãn</label>
-                                <input type="text" placeholder="Nhập nhãn" />
-                                <small>
-                                    Nhãn cho đợt phát này - Dấy các nhãn, phân cách bằng dấu phẩy hoặc theo định dạng
-                                    Nhãn|Giá trị. Nếu bạn chọn một nhãn có kèm giá trị, các giá trị đó sẽ hiển thị để
-                                    bạn lựa chọn bên dưới.
-                                </small>
-                            </div>
-
-                            <div className={cx('form-group')}>
-                                <label>Thứ tự phát trong danh sách</label>
-                                <select>
-                                    <option value="">Chọn thứ tự phát</option>
-                                    {orderOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <small>
-                                    Khi đợt phát này được lên lịch cùng với một đợt phát khác có cùng thứ tự hiển thị,
-                                    thì các bố cục của cả hai chiến dịch sẽ được sắp xếp theo thứ tự như thế nào?
-                                </small>
-                            </div>
-                        </div>
-
-                        <div className={cx('modal-footer')}>
-                            <button className={cx('cancel')} onClick={() => setShowModal(false)}>
-                                Hủy
-                            </button>
-                            <button className={cx('submit')}>Lưu</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <URLContentModal />
+            <TidyModal />
+            <ShareModal />
         </div>
     );
 }

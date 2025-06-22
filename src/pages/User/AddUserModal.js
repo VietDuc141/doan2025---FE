@@ -3,6 +3,8 @@ import classNames from 'classnames/bind';
 import styles from './User.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { useCreateUser } from '~/api/queries/userQueries';
+import { toast } from 'react-toastify';
 
 const cx = classNames.bind(styles);
 
@@ -81,9 +83,25 @@ function AddUserModal({ onClose }) {
         }
     };
 
-    const handleSave = () => {
-        // Handle save logic here
-        onClose();
+    const createUserMutation = useCreateUser();
+
+    const handleSave = async () => {
+        const userData = {
+            username: credentials.username,
+            password: credentials.password,
+            email: credentials.email,
+            role: selectedRole,
+            fullName: credentials.username,
+        };
+
+        try {
+            await createUserMutation.mutateAsync(userData);
+            console.log('useCreateUser', userData);
+            toast.success('Tạo người dùng thành công!');
+            onClose();
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Tạo người dùng thất bại!');
+        }
     };
 
     const isNextDisabled = () => {
@@ -106,13 +124,13 @@ function AddUserModal({ onClose }) {
                             <div className={cx('role-option')}>
                                 <input
                                     type="radio"
-                                    id="content-manager"
+                                    id="admin"
                                     name="role"
-                                    checked={selectedRole === 'content-manager'}
-                                    onChange={() => handleRoleSelect('content-manager')}
+                                    checked={selectedRole === 'admin'}
+                                    onChange={() => handleRoleSelect('admin')}
                                 />
                                 <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Content Manager</div>
+                                    <div className={cx('role-name')}>Admin</div>
                                     <div className={cx('role-description')}>
                                         Management of all features related to Content Creation only.
                                     </div>
@@ -121,56 +139,17 @@ function AddUserModal({ onClose }) {
                             <div className={cx('role-option')}>
                                 <input
                                     type="radio"
-                                    id="display-manager"
+                                    id="user"
                                     name="role"
-                                    checked={selectedRole === 'display-manager'}
-                                    onChange={() => handleRoleSelect('display-manager')}
+                                    checked={selectedRole === 'user'}
+                                    onChange={() => handleRoleSelect('user')}
                                 />
                                 <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Display Manager</div>
+                                    <div className={cx('role-name')}>User</div>
                                     <div className={cx('role-description')}>
                                         Management of all features for the purpose of Display Administration only.
                                     </div>
                                 </div>
-                            </div>
-                            <div className={cx('role-option')}>
-                                <input
-                                    type="radio"
-                                    id="playlist-manager"
-                                    name="role"
-                                    checked={selectedRole === 'playlist-manager'}
-                                    onChange={() => handleRoleSelect('playlist-manager')}
-                                />
-                                <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Playlist Manager</div>
-                                    <div className={cx('role-description')}>
-                                        Management of specific Playlists to edit / replace Media only.
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={cx('role-option')}>
-                                <input
-                                    type="radio"
-                                    id="schedule-manager"
-                                    name="role"
-                                    checked={selectedRole === 'schedule-manager'}
-                                    onChange={() => handleRoleSelect('schedule-manager')}
-                                />
-                                <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Schedule Manager</div>
-                                    <div className={cx('role-description')}>
-                                        Management of all features for the purpose of Event Scheduling only.
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={cx('role-option')}>
-                                <input
-                                    type="radio"
-                                    id="manual"
-                                    name="role"
-                                    checked={selectedRole === 'manual'}
-                                    onChange={() => handleRoleSelect('manual')}
-                                />
                             </div>
                         </div>
                     </div>
@@ -217,7 +196,7 @@ function AddUserModal({ onClose }) {
                                 value={credentials.email}
                                 onChange={handleCredentialsChange}
                             />
-                            <div className={cx('help-text')}>địa chỉ thư điện tử cho người dùng này</div>
+                            <div className={cx('help-text')}>Địa chỉ thư điện tử cho người dùng này</div>
                         </div>
                     </div>
                 );
