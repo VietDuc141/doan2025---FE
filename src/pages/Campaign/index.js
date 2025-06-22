@@ -23,10 +23,7 @@ const allColumns = [
     'Thời lượng',
     'Phát lại theo chu kỳ',
     'Số lần phát',
-    'Loại mục tiêu',
     'Mục tiêu',
-    'Phát',
-    'Lượt hiển thị',
     'Thứ tự phát trong danh sách',
 ];
 
