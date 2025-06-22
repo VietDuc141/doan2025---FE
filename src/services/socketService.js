@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 
 let socket = null;
+let onlineStatusChangeCallback = null;
 
 export const initializeSocket = (userId) => {
     if (!socket) {
@@ -13,10 +14,26 @@ export const initializeSocket = (userId) => {
         socket.on('connect', () => {
             console.log('Connected to WebSocket server');
             socket.emit('user-connect', { userId });
+            if (onlineStatusChangeCallback) {
+                onlineStatusChangeCallback('connect');
+            }
         });
 
         socket.on('connect_error', (error) => {
             console.error('WebSocket connection error:', error);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+            if (onlineStatusChangeCallback) {
+                onlineStatusChangeCallback('disconnect');
+            }
+        });
+
+        socket.on('online-users-update', (data) => {
+            if (onlineStatusChangeCallback) {
+                onlineStatusChangeCallback('update', data);
+            }
         });
 
         // Start heartbeat
@@ -31,6 +48,10 @@ export const initializeSocket = (userId) => {
 };
 
 export const getSocket = () => socket;
+
+export const setOnlineStatusChangeCallback = (callback) => {
+    onlineStatusChangeCallback = callback;
+};
 
 export const disconnectSocket = () => {
     if (socket) {

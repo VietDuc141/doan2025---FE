@@ -1,91 +1,105 @@
 import classNames from 'classnames/bind';
 import styles from './Play.module.scss';
-import { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import { useEffect, useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
 function Play() {
-    const [selectedId, setSelectedId] = useState(null);
+    const location = useLocation();
+    const [playlist, setPlaylist] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(true);
 
-    // Dummy data for content selection table, similar to PlayContent
-    const mockContentData = [
-        { id: 1, type: 'Video', name: 'Intro Video', duration: '00:30', size: '10MB' },
-        { id: 2, type: 'Image', name: 'Background Image', duration: '00:05', size: '2MB' },
-        { id: 3, type: 'Text', name: 'Welcome Message', duration: '00:10', size: '0.1MB' },
-    ];
+    useEffect(() => {
+        // Lấy dữ liệu playlist từ URL parameters
+        const searchParams = new URLSearchParams(location.search);
+        const playlistData = searchParams.get('playlist');
+        if (playlistData) {
+            try {
+                const decodedPlaylist = JSON.parse(decodeURIComponent(playlistData));
+                console.log("%c 1 --> Line: 21||index.js\n decodedPlaylist: ","color:#f0f;", decodedPlaylist);
+                setPlaylist(decodedPlaylist);
+            } catch (error) {
+                console.error('Error parsing playlist data:', error);
+            }
+        }
+    }, [location]);
+
+    const handleContentEnd = useCallback(() => {
+        // Chuyển sang nội dung tiếp theo
+        setCurrentIndex(prevIndex => {
+            if (prevIndex < playlist.length - 1) {
+                return prevIndex + 1;
+            }
+            // Nếu đã phát hết, quay lại từ đầu
+            return 0;
+        });
+    }, [playlist.length]);
+
+    // Xử lý tự động chuyển ảnh
+    useEffect(() => {
+        if (!playlist.length || currentIndex >= playlist.length) return;
+
+        const currentContent = playlist[currentIndex];
+        if (currentContent.type === 'image' && isPlaying) {
+            const duration = parseInt(currentContent.duration) * 1000; // Chuyển sang milliseconds
+            const timer = setTimeout(handleContentEnd, duration);
+            return () => clearTimeout(timer);
+        }
+    }, [currentIndex, isPlaying, playlist, handleContentEnd]);
+
+    const renderContent = () => {
+        if (!playlist.length || currentIndex >= playlist.length) {
+            return <div className={cx('no-content')}>Không có nội dung để phát</div>;
+        }
+
+        const currentContent = playlist[currentIndex];
+
+        if (currentContent.type === 'image') {
+            return (
+                <div className={cx('content-wrapper')}>
+                    <img
+                        src={currentContent.url}
+                        alt={currentContent.name}
+                        className={cx('content-display')}
+                    />
+                    <div className={cx('content-info')}>
+                        <h3>{currentContent.name}</h3>
+                        <p>Thời lượng: {currentContent.duration}s</p>
+                    </div>
+                </div>
+            );
+        } else if (currentContent.type === 'video') {
+            return (
+                <div className={cx('content-wrapper')}>
+                    <video
+                        src={currentContent.url}
+                        className={cx('content-display')}
+                        autoPlay
+                        controls
+                        onEnded={handleContentEnd}
+                    />
+                    <div className={cx('content-info')}>
+                        <h3>{currentContent.name}</h3>
+                        <p>Thời lượng: {currentContent.duration}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        return <div className={cx('unsupported-content')}>Định dạng không được hỗ trợ</div>;
+    };
 
     return (
         <div className={cx('play-page')}>
-            <div className={cx('header')}>
-                <h2>Nội dung phát</h2>
-                <div className={cx('actions')}>
-                    <button className={cx('add')}>
-                        <FontAwesomeIcon icon={faPlay} /> Phát
-                    </button>
-                </div>
+            <div className={cx('content-container')}>
+                {renderContent()}
             </div>
-
-            <div className={cx('filter-bar')}>
-                <div className={cx('filter-group')}>
-                    <label>Tên</label>
-                    <input type="text" placeholder="Nhập tên" />
+            <div className={cx('playlist-info')}>
+                <div className={cx('current-info')}>
+                    Đang phát: {currentIndex + 1}/{playlist.length}
                 </div>
-                <div className={cx('filter-group')}>
-                    <label>ID</label>
-                    <input type="text" placeholder="Nhập ID" />
-                </div>
-                <div className={cx('filter-group')}>
-                    <label>Đến lúc</label>
-                    <input type="time" />
-                </div>
-                <div className={cx('filter-group')}>
-                    <label>Đến Ngày</label>
-                    <input type="date" />
-                </div>
-            </div>
-
-            <div className={cx('table-container')}>
-                <h3>Chọn nội dung phát</h3>
-                <table className={cx('content-table')}>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Loại</th>
-                            <th>Tên</th>
-                            <th>Thời lượng</th>
-                            <th>Kích thước</th>
-                            <th>Chọn</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mockContentData.map((content) => (
-                            <tr key={content.id}>
-                                <td>{content.id}</td>
-                                <td>{content.type}</td>
-                                <td>{content.name}</td>
-                                <td>{content.duration}</td>
-                                <td>{content.size}</td>
-                                <td>
-                                    <input
-                                        type="radio"
-                                        name="option"
-                                        checked={selectedId === content.id}
-                                        onChange={() => setSelectedId(content.id)}
-                                    />
-                                </td>
-                            </tr>
-                        ))}
-                        {mockContentData.length === 0 && (
-                            <tr>
-                                <td colSpan="6" className={cx('no-data')}>
-                                    Không có dữ liệu
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
             </div>
         </div>
     );

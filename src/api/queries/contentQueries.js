@@ -1,6 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import instance from '../axios';
 
+// Query keys
+export const contentKeys = {
+    all: ['contents'],
+    lists: () => [...contentKeys.all, 'list'],
+    list: (filters) => [...contentKeys.lists(), { ...filters }],
+    details: () => [...contentKeys.all, 'detail'],
+    detail: (id) => [...contentKeys.details(), id],
+    totalSize: () => [...contentKeys.all, 'total-size'],
+    sizeByType: () => [...contentKeys.all, 'size-by-type'],
+};
+
 /**
  * Upload content to the server
  * @route POST /api/content
@@ -122,15 +133,6 @@ export const getContentList = async () => {
     return response.data;
 };
 
-// Query keys
-export const contentKeys = {
-    all: ['contents'],
-    lists: () => [...contentKeys.all, 'list'],
-    list: (filters) => [...contentKeys.lists(), { ...filters }],
-    details: () => [...contentKeys.all, 'detail'],
-    detail: (id) => [...contentKeys.details(), id],
-};
-
 // GET list contents
 export const useContents = (filters = {}) => {
     // Remove empty filters
@@ -157,6 +159,24 @@ export const useUploadContent = () => {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
+        },
+    });
+};
+
+// Upload content
+export const useUploadContentText = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data) => {
+            const response = await instance.post('/content/text', {
+                type: 'text',
+                ...data,
             });
             return response.data;
         },
@@ -216,6 +236,86 @@ export const useDeleteContent = () => {
         onSuccess: () => {
             // Invalidate contents query to refetch
             queryClient.invalidateQueries(contentKeys.lists());
-        }
+        },
+    });
+};
+
+/**
+ * Get total size of all content in the system
+ * @route GET /api/content/total-size
+ * @returns {Promise<Object>} Response object
+ * @returns {boolean} response.success - Status of the request (true/false)
+ * @returns {Object} response.data - The data object containing size information
+ * @returns {number} response.data.totalSize - Total size in bytes
+ * @returns {number} response.data.totalSizeMB - Total size in megabytes
+ *
+ * @example
+ * const { data } = useTotalContentSize();
+ *
+ * // Response structure:
+ * // {
+ * //     "success": true,
+ * //     "data": {
+ * //         "totalSize": 298986,    // size in bytes
+ * //         "totalSizeMB": 0.29     // size in MB
+ * //     }
+ * // }
+ */
+export const useTotalContentSize = () => {
+    return useQuery({
+        queryKey: contentKeys.totalSize(),
+        queryFn: async () => {
+            const response = await instance.get('/content/total-size');
+            return response.data;
+        },
+    });
+};
+
+/**
+ * Get content size breakdown by type
+ * @route GET /api/content/size-by-type
+ * @returns {Promise<Object>} Response object
+ * @returns {string} response.status - Status of the request ("success")
+ * @returns {Array<Object>} response.data - Array of size information by content type
+ * @returns {string} response.data[].type - Content type (image/video/text)
+ * @returns {number} response.data[].totalSize - Total size in bytes
+ * @returns {string} response.data[].sizeInMB - Total size in MB formatted string
+ * @returns {number} response.data[].count - Number of items of this type
+ *
+ * @example
+ * const { data } = useContentSizeByType();
+ *
+ * // Response structure:
+ * // {
+ * //     "status": "success",
+ * //     "data": [
+ * //         {
+ * //             "type": "image",
+ * //             "totalSize": 298986,
+ * //             "sizeInMB": "0.29",
+ * //             "count": 1
+ * //         },
+ * //         {
+ * //             "type": "video",
+ * //             "totalSize": 0,
+ * //             "sizeInMB": "0.00",
+ * //             "count": 0
+ * //         },
+ * //         {
+ * //             "type": "text",
+ * //             "totalSize": 0,
+ * //             "sizeInMB": "0.00",
+ * //             "count": 0
+ * //         }
+ * //     ]
+ * // }
+ */
+export const useContentSizeByType = () => {
+    return useQuery({
+        queryKey: contentKeys.sizeByType(),
+        queryFn: async () => {
+            const response = await instance.get('/content/size-by-type');
+            return response.data;
+        },
     });
 };

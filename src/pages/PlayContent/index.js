@@ -3,18 +3,19 @@ import { useForm } from 'react-hook-form';
 import classNames from 'classnames/bind';
 import styles from './PlayContent.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useContents, useUploadContent, useDeleteContent } from '~/api/queries/contentQueries';
+import { useContents, useDeleteContent, useUploadContent, useUploadContentText } from '~/api/queries/contentQueries';
 import {
+    faCheck,
+    faCopy,
     faFileUpload,
     faLink,
+    faPlay,
     faPlus,
+    faShare,
     faSync,
     faTimes,
     faTrash,
     faUpload,
-    faCopy,
-    faShare,
-    faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import debounce from 'lodash/debounce';
 
@@ -61,6 +62,7 @@ function PlayContent() {
     // Sử dụng queryFilters thay vì filters cho useContents
     const { data, isLoading, isError, error, refetch } = useContents(queryFilters);
     const uploadContentMutation = useUploadContent();
+    const uploadContentTextMutation = useUploadContentText();
     const deleteContentMutation = useDeleteContent();
 
     // Tạo debounced function để cập nhật query filters
@@ -305,7 +307,19 @@ function PlayContent() {
 
         const onSubmit = (data) => {
             console.log('Form submitted:', data);
-            setShowUrlModal(false);
+
+            uploadContentTextMutation.mutate({
+                name: data.name,
+                content: data.url,
+            }, {
+                onSuccess: () => {
+                    console.log('Content added successfully');
+                    setShowUrlModal(false);
+                },
+                onError: (error) => {
+                    console.error('Error adding content:', error);
+                },
+            });
         };
 
         if (!showUrlModal) return null;
@@ -484,11 +498,38 @@ function PlayContent() {
         );
     };
 
+    const handlePlay = () => {
+        if (selectedRows.length === 0) {
+            alert('Vui lòng chọn ít nhất một nội dung để phát');
+            return;
+        }
+
+        const selectedContents = selectedRows.map((idx) => {
+            const content = contents[idx];
+            console.log('%c 1 --> Line: 496||index.js\n content: ', 'color:#f0f;', content);
+            return {
+                id: content.ID,
+                name: content.Tên,
+                url: (content['Thể loại'].toLowerCase() === 'text') ? `http://localhost:3001/uploads/${content.Ảnh}` : content.Ảnh,
+                type: content['Thể loại'].toLowerCase(),
+                duration: content['Thời lượng'],
+            };
+        });
+
+        // Mã hóa dữ liệu để truyền qua URL
+        const encodedPlaylist = encodeURIComponent(JSON.stringify(selectedContents));
+        // Mở tab mới với đường dẫn /play và dữ liệu playlist
+        window.open(`/play?playlist=${encodedPlaylist}`, '_blank');
+    };
+
     return (
         <div className={cx('play-content')}>
             <div className={cx('header')}>
                 <h2>Thư viện</h2>
                 <div className={cx('actions')}>
+                    <button className={cx('play')} onClick={handlePlay} disabled={selectedRows.length === 0}>
+                        <FontAwesomeIcon icon={faPlay} /> Phát
+                    </button>
                     <button className={cx('add')} onClick={() => setShowAddContentModal(true)}>
                         <FontAwesomeIcon icon={faPlus} />
                         Thêm Nội dung
@@ -524,6 +565,7 @@ function PlayContent() {
                         <option value="">Tất cả</option>
                         <option value="image">Ảnh</option>
                         <option value="video">Video</option>
+                        <option value="text">Text</option>
                     </select>
                 </div>
                 <div className={cx('filter-group')}>
