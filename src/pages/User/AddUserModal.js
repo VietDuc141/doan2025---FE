@@ -121,45 +121,45 @@ function AddUserModal({ onClose }) {
                             <div className={cx('role-option')}>
                                 <input
                                     type="radio"
-                                    id="display-manager"
+                                    id="plan-manager"
                                     name="role"
-                                    checked={selectedRole === 'display-manager'}
-                                    onChange={() => handleRoleSelect('display-manager')}
+                                    checked={selectedRole === 'plan-manager'}
+                                    onChange={() => handleRoleSelect('plan-manager')}
                                 />
                                 <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Display Manager</div>
+                                    <div className={cx('role-name')}>Plan Manager</div>
                                     <div className={cx('role-description')}>
-                                        Management of all features for the purpose of Display Administration only.
+                                        Management of all features for the purpose of Plan Administration only.
                                     </div>
                                 </div>
                             </div>
                             <div className={cx('role-option')}>
                                 <input
                                     type="radio"
-                                    id="playlist-manager"
+                                    id="campaign-manager"
                                     name="role"
-                                    checked={selectedRole === 'playlist-manager'}
-                                    onChange={() => handleRoleSelect('playlist-manager')}
+                                    checked={selectedRole === 'campaign-manager'}
+                                    onChange={() => handleRoleSelect('campaign-manager')}
                                 />
                                 <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Playlist Manager</div>
+                                    <div className={cx('role-name')}>Campaign Manager</div>
                                     <div className={cx('role-description')}>
-                                        Management of specific Playlists to edit / replace Media only.
+                                        Management of specific Campaigns to edit / replace.
                                     </div>
                                 </div>
                             </div>
                             <div className={cx('role-option')}>
                                 <input
                                     type="radio"
-                                    id="schedule-manager"
+                                    id="timeline-manager"
                                     name="role"
-                                    checked={selectedRole === 'schedule-manager'}
-                                    onChange={() => handleRoleSelect('schedule-manager')}
+                                    checked={selectedRole === 'timeline-manager'}
+                                    onChange={() => handleRoleSelect('timeline-manager')}
                                 />
                                 <div className={cx('role-info')}>
-                                    <div className={cx('role-name')}>Schedule Manager</div>
+                                    <div className={cx('role-name')}>Timeline Manager</div>
                                     <div className={cx('role-description')}>
-                                        Management of all features for the purpose of Event Scheduling only.
+                                        Management of all features for the purpose of Event Timeline only.
                                     </div>
                                 </div>
                             </div>
