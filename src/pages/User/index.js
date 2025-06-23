@@ -2,21 +2,38 @@ import { useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './User.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSync,} from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import AddUserModal from './AddUserModal';
 
 const cx = classNames.bind(styles);
 
 const columns = [
     { key: 'username', label: 'Tên người dùng', sortable: true },
-    { key: 'status', label: 'Trạng chủ', sortable: true },
-    { key: 'homeFolder', label: 'Thư mục cá nhân', sortable: true },
+    { key: 'status', label: 'Trang chủ', sortable: true },
     { key: 'email', label: 'Thư điện tử', sortable: true },
-    { key: 'libraryQuota', label: 'Hạn ngạch Thư viện', sortable: true },
     { key: 'lastLogin', label: 'Lần đăng nhập cuối', sortable: true },
     { key: 'loggedIn', label: 'Đã đăng nhập?', sortable: true },
     { key: 'retired', label: 'Ngưng sử dụng', sortable: true },
-    { key: 'actions', label: 'Row Menu', sortable: false },
+];
+
+// Giả lập dữ liệu user
+const mockUsers = [
+    {
+        username: 'admin',
+        homeFolder: '/home/admin',
+        email: 'admin@example.com',
+        lastLogin: '2024-06-01',
+        loggedIn: 'Yes',
+        retired: 'No',
+    },
+    {
+        username: 'user1',
+        homeFolder: '/home/user1',
+        email: 'user1@example.com',
+        lastLogin: '2024-05-30',
+        loggedIn: 'No',
+        retired: 'No',
+    },
 ];
 
 function User() {
@@ -28,6 +45,7 @@ function User() {
         lastName: '',
     });
     const [showAddModal, setShowAddModal] = useState(false);
+    const [users, setUsers] = useState(mockUsers);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -43,6 +61,13 @@ function User() {
 
     const handleCloseModal = () => {
         setShowAddModal(false);
+    };
+
+    // Hàm xóa user theo id
+    const handleDeleteUser = (id) => {
+        if (window.confirm('Bạn có chắc muốn xóa user này?')) {
+            setUsers((prev) => prev.filter((user) => user.id !== id));
+        }
     };
 
     return (
@@ -66,15 +91,6 @@ function User() {
                         <label>Tên người dùng</label>
                         <div className={cx('input-group')}>
                             <input type="text" name="username" value={filters.username} onChange={handleFilterChange} />
-                        </div>
-                    </div>
-                    <div className={cx('form-group')}>
-                        <label>Người dùng Định nghĩa</label>
-                        <div className={cx('input-group')}>
-                            <select name="userType" value={filters.userType} onChange={handleFilterChange}>
-                                <option value="Group Admin">Group Admin</option>
-                                <option value="User">User</option>
-                            </select>
                         </div>
                     </div>
                     <div className={cx('form-group')}>
@@ -118,9 +134,6 @@ function User() {
                         </select>
                         entries
                     </div>
-                    <div className={cx('table-buttons')}>
-                        <button>Chọn cột hiển thị</button>
-                    </div>
                 </div>
 
                 <div className={cx('table-wrapper')}>
@@ -132,14 +145,34 @@ function User() {
                                         {column.label}
                                     </th>
                                 ))}
+                                <th>Xóa</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td colSpan={columns.length} className={cx('no-data')}>
-                                    No data available in table
-                                </td>
-                            </tr>
+                            {users.length === 0 ? (
+                                <tr>
+                                    <td colSpan={columns.length + 1} className={cx('no-data')}>
+                                        No data available in table
+                                    </td>
+                                </tr>
+                            ) : (
+                                users.map((user) => (
+                                    <tr key={user.id}>
+                                        {columns.map((column) => (
+                                            <td key={column.key}>{user[column.key]}</td>
+                                        ))}
+                                        <td>
+                                            <button
+                                                className={cx('delete-button')}
+                                                title="Xóa user"
+                                                onClick={() => handleDeleteUser(user.id)}
+                                            >
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

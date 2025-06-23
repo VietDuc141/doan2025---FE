@@ -163,15 +163,6 @@ function AddUserModal({ onClose }) {
                                     </div>
                                 </div>
                             </div>
-                            <div className={cx('role-option')}>
-                                <input
-                                    type="radio"
-                                    id="manual"
-                                    name="role"
-                                    checked={selectedRole === 'manual'}
-                                    onChange={() => handleRoleSelect('manual')}
-                                />
-                            </div>
                         </div>
                     </div>
                 );

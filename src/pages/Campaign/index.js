@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import styles from './Campaign.module.scss';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faSync, faPlus, } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faSync, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
@@ -24,32 +24,32 @@ const allColumns = [
 
 const mockData = [
     {
-        'Tên': 'Chiến dịch A',
+        Tên: 'Chiến dịch A',
         'Thể loại': 'Danh Sách',
         'Ngày bắt đầu': '2025-05-01',
         'Ngày kết thúc': '2025-05-10',
         '# Bố cục': 1,
-        'Nhãn': 'bgvguhb',
+        Nhãn: 'bgvguhb',
         'Thời lượng': '00:01:00',
         'Phát lại theo chu kỳ': 'Bật',
         'Số lần phát': 5,
         'Loại mục tiêu': 'Loại A',
         'Mục tiêu': 'Mục tiêu A',
-        'Phát': 'Phát A',
+        Phát: 'Phát A',
     },
     {
-        'Tên': 'Chiến dịch B',
+        Tên: 'Chiến dịch B',
         'Thể loại': 'Danh Sách',
         'Ngày bắt đầu': '2025-05-02',
         'Ngày kết thúc': '2025-05-12',
         '# Bố cục': 0,
-        'Nhãn': '1|1',
+        Nhãn: '1|1',
         'Thời lượng': '00:00:30',
         'Phát lại theo chu kỳ': 'Tắt',
         'Số lần phát': 3,
         'Loại mục tiêu': 'Loại B',
         'Mục tiêu': 'Mục tiêu B',
-        'Phát': 'Phát B',
+        Phát: 'Phát B',
     },
 ];
 
@@ -59,6 +59,7 @@ function Campaign() {
     const [showModal, setShowModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const [allSelected, setAllSelected] = useState(false);
+    const [campaigns, setCampaigns] = useState(mockData.map((item, idx) => ({ ...item, id: idx + 1 })));
 
     const typeOptions = [
         { value: 'layout_list', label: 'Danh sách bố cục' },
@@ -88,7 +89,7 @@ function Campaign() {
             setSelectedRows([]);
             setAllSelected(false);
         } else {
-            const allIndexes = mockData.map((_, index) => index);
+            const allIndexes = campaigns.map((_, index) => index);
             setSelectedRows(allIndexes);
             setAllSelected(true);
         }
@@ -103,6 +104,16 @@ function Campaign() {
         } else {
             setSelectedRows([index]);
             setAllSelected(false);
+        }
+    };
+
+    // Hàm xóa campaign theo id
+    const handleDeleteCampaign = (id) => {
+        if (window.confirm('Bạn có chắc muốn xóa campaign này?')) {
+            setCampaigns((prev) => prev.filter((campaign) => campaign.id !== id));
+            // Nếu dùng API thật:
+            // fetch(`/api/campaigns/${id}`, { method: 'DELETE' })
+            //   .then(() => ...)
         }
     };
 
@@ -195,18 +206,31 @@ function Campaign() {
                                     {visibleColumns.map((col, idx) => (
                                         <th key={idx}>{col}</th>
                                     ))}
+                                    <th>Xóa</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockData.map((row, rowIdx) => (
+                                {campaigns.map((row, rowIdx) => (
                                     <tr
-                                        key={rowIdx}
+                                        key={row.id}
                                         onClick={() => handleRowClick(rowIdx)}
                                         className={cx({ selected: selectedRows.includes(rowIdx) })}
                                     >
                                         {visibleColumns.map((col, colIdx) => (
                                             <td key={colIdx}>{row[col]}</td>
                                         ))}
+                                        <td>
+                                            <button
+                                                className={cx('delete-button')}
+                                                title="Xóa campaign"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteCampaign(row.id);
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
