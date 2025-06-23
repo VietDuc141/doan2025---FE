@@ -9,7 +9,6 @@ const cx = classNames.bind(styles);
 
 const columns = [
     { key: 'username', label: 'Tên người dùng', sortable: true },
-    { key: 'status', label: 'Trang chủ', sortable: true },
     { key: 'email', label: 'Thư điện tử', sortable: true },
     { key: 'lastLogin', label: 'Lần đăng nhập cuối', sortable: true },
     { key: 'loggedIn', label: 'Đã đăng nhập?', sortable: true },
