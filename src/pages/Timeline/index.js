@@ -4,7 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './Timeline.module.scss';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSync, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSync, faXmark, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
@@ -31,6 +31,7 @@ function Timeline() {
     const [showModal, setShowModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const [allSelected, setAllSelected] = useState(false);
+    const [timelines, setTimelines] = useState(mockData.map((item, idx) => ({ ...item, id: idx + 1 })));
 
     // Chọn cột hiển thị cho bảng
     const toggleColumn = (col) => {
@@ -50,7 +51,7 @@ function Timeline() {
             setSelectedRows([]);
             setAllSelected(false);
         } else {
-            const allIndexes = mockData.map((_, index) => index);
+            const allIndexes = timelines.map((_, index) => index);
             setSelectedRows(allIndexes);
             setAllSelected(true);
         }
@@ -65,6 +66,13 @@ function Timeline() {
         } else {
             setSelectedRows([index]);
             setAllSelected(false);
+        }
+    };
+
+    // Hàm xóa timeline theo id
+    const handleDeleteTimeline = (id) => {
+        if (window.confirm('Bạn có chắc muốn xóa timeline này?')) {
+            setTimelines((prev) => prev.filter((timeline) => timeline.id !== id));
         }
     };
 
@@ -129,8 +137,6 @@ function Timeline() {
                                 </ul>
                             )}
                         </div>
-                        <button>In</button>
-                        <button>CSV</button>
                     </div>
                 </div>
                 <table className={cx('schedule-table')}>
@@ -139,18 +145,31 @@ function Timeline() {
                             {visibleColumns.map((col, idx) => (
                                 <th key={idx}>{col}</th>
                             ))}
+                            <th>Xóa</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {mockData.map((row, rowIdx) => (
+                        {timelines.map((row, rowIdx) => (
                             <tr
-                                key={rowIdx}
+                                key={row.id}
                                 onClick={() => handleRowClick(rowIdx)}
                                 className={cx({ selected: selectedRows.includes(rowIdx) })}
                             >
                                 {visibleColumns.map((col, colIdx) => (
                                     <td key={colIdx}>{row[col]}</td>
                                 ))}
+                                <td>
+                                    <button
+                                        className={cx('delete-button')}
+                                        title="Xóa timeline"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteTimeline(row.id);
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -184,10 +203,10 @@ function Timeline() {
                         <div className={cx('modal-body')}>
                             <div className={cx('form-group')}>
                                 <label>Tên</label>
-                                <input type="text"/>
+                                <input type="text" />
                                 <small>Tên cho sự kiện này</small>
                             </div>
-                            <div className={cx('form-group','choose-time')}>
+                            <div className={cx('form-group', 'choose-time')}>
                                 <label>
                                     Sử dụng thời gian tương đối?
                                     <input type="checkbox" />

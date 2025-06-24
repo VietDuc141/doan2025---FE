@@ -53,7 +53,7 @@ function User() {
 
     const [uiFilters, setUiFilters] = useState({
         username: '',
-        userType: '',
+        userType: 'Group Admin',
         retired: 'No',
         _id: '',
     });
@@ -338,17 +338,25 @@ function User() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginatedUsers.map((row, rowIdx) => (
-                                    <tr
-                                        key={rowIdx}
-                                        onClick={() => handleRowClick(rowIdx)}
-                                        className={cx({ selected: selectedRows.includes(rowIdx) })}
-                                    >
-                                        {visibleColumns.map((col, colIdx) => (
-                                            <td key={colIdx}>{row[col]}</td>
-                                        ))}
+                                {users.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={columns.length + 1} className={cx('no-data')}>
+                                            No data available in table
+                                        </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    paginatedUsers.map((row, rowIdx) => (
+                                        <tr
+                                            key={rowIdx}
+                                            onClick={() => handleRowClick(rowIdx)}
+                                            className={cx({ selected: selectedRows.includes(rowIdx) })}
+                                        >
+                                            {visibleColumns.map((col, colIdx) => (
+                                                <td key={colIdx}>{row[col]}</td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

@@ -151,6 +151,51 @@ function AddUserModal({ onClose }) {
                                     </div>
                                 </div>
                             </div>
+                            {/*<div className={cx('role-option')}>
+                                <input
+                                    type="radio"
+                                    id="plan-manager"
+                                    name="role"
+                                    checked={selectedRole === 'plan-manager'}
+                                    onChange={() => handleRoleSelect('plan-manager')}
+                                />
+                                <div className={cx('role-info')}>
+                                    <div className={cx('role-name')}>Plan Manager</div>
+                                    <div className={cx('role-description')}>
+                                        Management of all features for the purpose of Plan Administration only.
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={cx('role-option')}>
+                                <input
+                                    type="radio"
+                                    id="campaign-manager"
+                                    name="role"
+                                    checked={selectedRole === 'campaign-manager'}
+                                    onChange={() => handleRoleSelect('campaign-manager')}
+                                />
+                                <div className={cx('role-info')}>
+                                    <div className={cx('role-name')}>Campaign Manager</div>
+                                    <div className={cx('role-description')}>
+                                        Management of specific Campaigns to edit / replace.
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={cx('role-option')}>
+                                <input
+                                    type="radio"
+                                    id="timeline-manager"
+                                    name="role"
+                                    checked={selectedRole === 'timeline-manager'}
+                                    onChange={() => handleRoleSelect('timeline-manager')}
+                                />
+                                <div className={cx('role-info')}>
+                                    <div className={cx('role-name')}>Timeline Manager</div>
+                                    <div className={cx('role-description')}>
+                                        Management of all features for the purpose of Event Timeline only.
+                                    </div>
+                                </div>
+                            </div>*/}
                         </div>
                     </div>
                 );

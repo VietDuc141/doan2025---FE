@@ -2,7 +2,7 @@ import classNames from 'classnames/bind';
 import styles from './Plan.module.scss';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faPlus, faXmark, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const cx = classNames.bind(styles);
 
@@ -47,7 +47,7 @@ function Plan() {
         'Ưu tiên?',
         'Tiêu chí?',
     ]);
-    
+
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
 
     const toggleColumnDropdown = () => setShowColumnDropdown(!showColumnDropdown);
@@ -86,6 +86,17 @@ function Plan() {
             'Tiêu chí?': 'Tần suất',
         },
     ];
+
+    const [plans, setPlans] = useState(mockData.map((item, idx) => ({ ...item, id: idx + 1 })));
+
+    const handleDeletePlan = (id) => {
+        if (window.confirm('Bạn có chắc muốn xóa plan này?')) {
+            setPlans((prev) => prev.filter((plan) => plan.id !== id));
+            // Nếu dùng API thật:
+            // fetch(`/api/plans/${id}`, { method: 'DELETE' })
+            //   .then(() => ...)
+        }
+    };
 
     const sortedVisibleColumns = fixedColumnOrder.filter((col) => visibleColumns.includes(col));
 
@@ -208,9 +219,6 @@ function Plan() {
                                 </ul>
                             )}
                         </div>
-                        <button>Sắp xếp mặc định</button>
-                        <button>In</button>
-                        <button>CSV</button>
                     </div>
                 </div>
                 <table className={cx('schedule-table')}>
@@ -219,14 +227,24 @@ function Plan() {
                             {sortedVisibleColumns.map((col, index) => (
                                 <th key={index}>{col}</th>
                             ))}
+                            <th>Xóa</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {mockData.map((row, rowIndex) => (
-                            <tr key={rowIndex}>
+                        {plans.map((row, rowIndex) => (
+                            <tr key={row.id}>
                                 {sortedVisibleColumns.map((col, colIndex) => (
                                     <td key={colIndex}>{row[col]}</td>
                                 ))}
+                                <td>
+                                    <button
+                                        className={cx('delete-button')}
+                                        title="Xóa plan"
+                                        onClick={() => handleDeletePlan(row.id)}
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -253,7 +271,7 @@ function Plan() {
                         <div className={cx('modal-body')}>
                             <div className={cx('form-group')}>
                                 <label>Tên</label>
-                                <input type="text"/>
+                                <input type="text" />
                                 <small>Tên cho sự kiện này</small>
                             </div>
                             <div className={cx('form-group')}>
@@ -328,7 +346,7 @@ function Plan() {
                                 <input type="number" defaultValue={0} />
                                 <small>Giới hạn số lần phát mỗi giờ trên mỗi thiết bị.</small>
                             </div>
-                            <div className={cx('form-group','choose-time')}>
+                            <div className={cx('form-group', 'choose-time')}>
                                 <label>
                                     Chạy theo giờ CMS
                                     <input type="checkbox" />

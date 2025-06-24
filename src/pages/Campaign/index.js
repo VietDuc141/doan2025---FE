@@ -509,12 +509,7 @@ function Campaign() {
                     >
                         <FontAwesomeIcon icon={faSync} />
                     </button>
-
-                    <button className={cx('clean')} onClick={() => setShowTidyModal(true)}>
-                        <FontAwesomeIcon icon={faTrash} />
-                        Tidy Library
-                    </button>
-                    <button className={cx('add')} onClick={() => setShowUrlModal(true)}>
+                    <button className={cx('add')} onClick={() => setShowModal(true)}>
                         <FontAwesomeIcon icon={faPlus} /> Thêm đợt phát
                     </button>
                 </div>
@@ -607,6 +602,7 @@ function Campaign() {
                                     {visibleColumns.map((col, idx) => (
                                         <th key={idx}>{col}</th>
                                     ))}
+                                    <th>Xóa</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -619,6 +615,18 @@ function Campaign() {
                                         {visibleColumns.map((col, colIdx) => (
                                             <td key={colIdx}>{row[col]}</td>
                                         ))}
+                                        <td>
+                                            <button
+                                                className={cx('delete-button')}
+                                                title="Xóa campaign"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteCampaign(row.id);
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
