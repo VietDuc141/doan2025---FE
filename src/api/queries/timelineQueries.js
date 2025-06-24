@@ -2,22 +2,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import instance from '../axios';
 import { toast } from 'react-toastify';
 
-export const campaignKeys = {
-    all: ['campaigns'],
-    lists: () => [...campaignKeys.all, 'list'],
-    list: (filters) => [...campaignKeys.lists(), { ...filters }],
-    details: () => [...campaignKeys.all, 'detail'],
-    detail: (id) => [...campaignKeys.details(), id],
+export const timelineKeys = {
+    all: ['timelines'],
+    lists: () => [...timelineKeys.all, 'list'],
+    list: (filters) => [...timelineKeys.lists(), { ...filters }],
+    details: () => [...timelineKeys.all, 'detail'],
+    detail: (id) => [...timelineKeys.details(), id],
 };
 
-export const useCampaigns = (filters = {}) => {
+export const useTimelines = (filters = {}) => {
     // Remove empty filters
     const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ''));
 
     return useQuery({
-        queryKey: campaignKeys.list(cleanFilters),
+        queryKey: timelineKeys.list(cleanFilters),
         queryFn: async () => {
-            const response = await instance.get('/campaigns', {
+            const response = await instance.get('/timelines', {
                 params: cleanFilters,
             });
             return response.data;
@@ -25,37 +25,37 @@ export const useCampaigns = (filters = {}) => {
     });
 };
 
-export const useUploadCampaign = () => {
+export const useUploadTimeline = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (payload) => {
-            const response = await instance.post('/campaigns', payload);
+            const response = await instance.post('/timelines', payload);
             console.log('response.data:', response.data);
             return response.data;
         },
         onSuccess: () => {
             // Invalidate các query campaign để reload lại danh sách
-            queryClient.invalidateQueries({ queryKey: campaignKeys.lists?.() || ['campaigns'] });
-            toast.success('Tạo đợi phát thành công!');
+            queryClient.invalidateQueries({ queryKey: timelineKeys.lists?.() || ['timelines'] });
+            toast.success('Tạo khung giờ phát thành công!');
         },
         onError: () => {
-            toast.error('Tạo đợi phát thất bại!');
+            toast.error('Tạo khung giờ phát thất bại!');
         },
     });
 };
 
-export const useDeleteCampaign = () => {
+export const useDeleteTimeline = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (campaignId) => {
-            const response = await instance.delete(`/campaigns/${campaignId}`);
+        mutationFn: async (timelineID) => {
+            const response = await instance.delete(`/timelines/${timelineID}`);
             return response.data;
         },
         onSuccess: () => {
             // Invalidate contents query to refetch
-            queryClient.invalidateQueries(campaignKeys.lists());
+            queryClient.invalidateQueries(timelineKeys.lists());
         },
     });
 };

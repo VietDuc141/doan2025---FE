@@ -512,6 +512,10 @@ function Campaign() {
                     <button className={cx('add')} onClick={() => setShowUrlModal(true)}>
                         <FontAwesomeIcon icon={faPlus} /> Thêm đợt phát
                     </button>
+                    <button className={cx('clean')} onClick={() => setShowTidyModal(true)}>
+                        <FontAwesomeIcon icon={faTrash} />
+                        Xóa đợi phát
+                    </button>
                 </div>
             </div>
 

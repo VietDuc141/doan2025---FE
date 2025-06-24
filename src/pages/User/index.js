@@ -53,7 +53,7 @@ function User() {
 
     const [uiFilters, setUiFilters] = useState({
         username: '',
-        userType: 'Group Admin',
+        userType: '',
         retired: 'No',
         _id: '',
     });
