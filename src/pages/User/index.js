@@ -8,6 +8,15 @@ import { useActiveUser, useUsers } from '~/api/queries/userQueries';
 import dayjs from 'dayjs';
 
 const cx = classNames.bind(styles);
+const menuOptions = [
+    { value: 'dashboard', label: 'Bảng Điều Khiển' },
+    { value: 'play', label: 'Phát Lập Tức' },
+    { value: 'plan', label: 'Lên lịch' },
+    { value: 'play-content', label: 'Nội dung' },
+    { value: 'timeline', label: 'Khung giờ phát' },
+    { value: 'campaign', label: 'Đợt phát' },
+    { value: 'user', label: 'Người sử dụng' },
+];
 
 const allColumns = [
     'Tên người dùng',
@@ -18,6 +27,7 @@ const allColumns = [
     'Ngưng sử dụng',
     'Đã đăng nhập?',
     'ID',
+    'Menu',
     // { key: 'username', label: 'Tên người dùng', sortable: true },
     // { key: 'status', label: 'Trạng thái', sortable: true },
     // { key: 'homeFolder', label: 'Thư mục cá nhân', sortable: true },
@@ -38,6 +48,7 @@ function User() {
         'Lần đăng nhập cuối',
         'Ngưng sử dụng',
         'Đã đăng nhập?',
+        'Menu',
     ]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -86,6 +97,10 @@ function User() {
                 'Lần đăng nhập cuối': user.lastLogin ? dayjs(user.lastLogin).format('DD/MM/YYYY HH:mm:ss') : '',
                 'Ngưng sử dụng': user.isActive ? 'No' : 'Yes',
                 'Đã đăng nhập?': user.lastLogin && user.lastLogin !== user.createdAt ? 'Yes' : 'No',
+                Menu:
+                    user.menu?.length > 0
+                        ? user.menu.map((item) => menuOptions.find((x) => x.value === item)?.label || '').join(', ')
+                        : '',
                 ID: user._id,
             })) || [],
         [data],

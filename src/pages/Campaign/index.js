@@ -606,7 +606,6 @@ function Campaign() {
                                     {visibleColumns.map((col, idx) => (
                                         <th key={idx}>{col}</th>
                                     ))}
-                                    {/*<th>Xóa</th>*/}
                                 </tr>
                             </thead>
                             <tbody>
@@ -619,18 +618,6 @@ function Campaign() {
                                         {visibleColumns.map((col, colIdx) => (
                                             <td key={colIdx}>{row[col]}</td>
                                         ))}
-                                        {/*<td>
-                                            <button
-                                                className={cx('delete-button')}
-                                                title="Xóa campaign"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteCampaign(row.id);
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faTrash} />
-                                            </button>
-                                        </td>*/}
                                     </tr>
                                 ))}
                             </tbody>

@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useCreateUser } from '~/api/queries/userQueries';
 import { toast } from 'react-toastify';
+import Select from 'react-select';
 
 const cx = classNames.bind(styles);
 
@@ -13,6 +14,16 @@ const STEPS = {
     CREDENTIALS: 2,
 };
 
+const menuOptions = [
+    { value: 'dashboard', label: 'Bảng Điều Khiển' },
+    { value: 'play', label: 'Phát Lập Tức' },
+    { value: 'plan', label: 'Lên lịch' },
+    { value: 'play-content', label: 'Nội dung' },
+    { value: 'timeline', label: 'Khung giờ phát' },
+    { value: 'campaign', label: 'Đợt phát' },
+    { value: 'user', label: 'Người sử dụng' },
+];
+
 function AddUserModal({ onClose }) {
     const [currentStep, setCurrentStep] = useState(STEPS.CREATE);
     const [selectedRole, setSelectedRole] = useState('');
@@ -20,6 +31,7 @@ function AddUserModal({ onClose }) {
         username: '',
         password: '',
         email: '',
+        menu: [],
     });
     const [errors, setErrors] = useState({
         username: '',
@@ -28,6 +40,22 @@ function AddUserModal({ onClose }) {
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
+
+        // Nếu chọn admin, set tất cả menu
+        if (role === 'admin') {
+            setCredentials((prev) => ({
+                ...prev,
+                menu: menuOptions.map((item) => ({
+                    value: item.value,
+                    label: item.label,
+                })),
+            }));
+        } else {
+            setCredentials((prev) => ({
+                ...prev,
+                menu: [],
+            }));
+        }
     };
 
     const validateCredentials = () => {
@@ -66,6 +94,14 @@ function AddUserModal({ onClose }) {
         }
     };
 
+    const handleMenuChange = (selectedOptions) => {
+        setCredentials((prev) => ({
+            ...prev,
+            menu: selectedOptions, // giữ nguyên là array [{value, label}, ...] nếu cần toàn bộ
+            // hoặc: menu: selectedOptions.map(opt => opt.value) nếu bạn chỉ cần value
+        }));
+    };
+
     const handleNext = () => {
         if (currentStep === STEPS.CREDENTIALS) {
             if (!validateCredentials()) {
@@ -92,11 +128,12 @@ function AddUserModal({ onClose }) {
             email: credentials.email,
             role: selectedRole,
             fullName: credentials.username,
+            menu: credentials.menu.map((item) => item.value),
         };
 
         try {
-            await createUserMutation.mutateAsync(userData);
             console.log('useCreateUser', userData);
+            await createUserMutation.mutateAsync(userData);
             toast.success('Tạo người dùng thành công!');
             onClose();
         } catch (error) {
@@ -242,6 +279,24 @@ function AddUserModal({ onClose }) {
                                 onChange={handleCredentialsChange}
                             />
                             <div className={cx('help-text')}>Địa chỉ thư điện tử cho người dùng này</div>
+                        </div>
+                        <div className={cx('form-group')}>
+                            <label htmlFor="menu">Menu được cấp</label>
+                            <Select
+                                isMulti
+                                options={menuOptions.map((item) => ({
+                                    value: item.value,
+                                    label: item.label,
+                                }))}
+                                placeholder="Chọn một hoặc nhiều menu"
+                                classNamePrefix="react-select"
+                                onChange={handleMenuChange}
+                                type="menu"
+                                id="menu"
+                                name="menu"
+                                value={credentials.menu}
+                            />
+                            <div className={cx('help-text')}>Menu người dùng có thể vào</div>
                         </div>
                     </div>
                 );
