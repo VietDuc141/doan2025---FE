@@ -340,7 +340,7 @@ function User() {
                             <tbody>
                                 {users.length === 0 ? (
                                     <tr>
-                                        <td colSpan={columns.length + 1} className={cx('no-data')}>
+                                        <td colSpan={visibleColumns.length + 1} className={cx('no-data')}>
                                             No data available in table
                                         </td>
                                     </tr>

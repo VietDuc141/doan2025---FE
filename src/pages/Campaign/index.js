@@ -509,7 +509,7 @@ function Campaign() {
                     >
                         <FontAwesomeIcon icon={faSync} />
                     </button>
-                    <button className={cx('add')} onClick={() => setShowModal(true)}>
+                    <button className={cx('add')} onClick={() => setShowUrlModal(true)}>
                         <FontAwesomeIcon icon={faPlus} /> Thêm đợt phát
                     </button>
                 </div>
@@ -602,7 +602,7 @@ function Campaign() {
                                     {visibleColumns.map((col, idx) => (
                                         <th key={idx}>{col}</th>
                                     ))}
-                                    <th>Xóa</th>
+                                    {/*<th>Xóa</th>*/}
                                 </tr>
                             </thead>
                             <tbody>
@@ -615,7 +615,7 @@ function Campaign() {
                                         {visibleColumns.map((col, colIdx) => (
                                             <td key={colIdx}>{row[col]}</td>
                                         ))}
-                                        <td>
+                                        {/*<td>
                                             <button
                                                 className={cx('delete-button')}
                                                 title="Xóa campaign"
@@ -626,7 +626,7 @@ function Campaign() {
                                             >
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </button>
-                                        </td>
+                                        </td>*/}
                                     </tr>
                                 ))}
                             </tbody>
