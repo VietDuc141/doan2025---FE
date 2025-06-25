@@ -43,8 +43,12 @@
                     }
                 }
 
-                &.add-button {
-                    margin-right: 20px;
+                &.clean {
+                    background-color: #dc3545;
+
+                    &:hover {
+                        background-color: #c82333;
+                    }
                 }
             }
         }
@@ -421,7 +425,8 @@
         background: rgba(0, 0, 0, 0.5);
     }
 
-    .modal-content {
+    .modal-content,
+    .tidy-modal {
         position: relative;
         background: white;
         border-radius: 8px;
@@ -516,6 +521,100 @@
 
                 &:hover {
                     color: var(--black);
+                }
+            }
+        }
+    }
+}
+.group {
+    display: flex;
+    justify-content: space-between;
+    .form-group {
+        width: 47%;
+    }
+}
+
+.tidy-modal {
+    background: white;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 95vw;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .tidy-modal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #e5e5e5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+
+            &:hover {
+                color: #333;
+            }
+        }
+    }
+
+    .tidy-modal-body {
+        padding: 20px;
+
+        .message {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 14px;
+
+            .data-info {
+                margin-top: 10px;
+                color: #696969;
+            }
+        }
+    }
+
+    .tidy-modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #e5e5e5;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+
+        button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+
+            &.confirm {
+                background-color: #0d6efd;
+                border: none;
+                color: white;
+
+                &:hover {
+                    background-color: #0b5ed7;
+                }
+            }
+
+            &.cancel {
+                background-color: none;
+                border: none;
+                color: #333;
+
+                &:hover {
+                    background-color: #e9ecef;
                 }
             }
         }

@@ -59,3 +59,13 @@ export const useDeleteplan = () => {
         },
     });
 };
+
+export const useCampaignList = () => {
+    return useQuery({
+        queryKey: ['content-list', 'campaign'],
+        queryFn: async () => {
+            const response = await instance.get('/campaigns', {});
+            return response.data;
+        },
+    });
+};
