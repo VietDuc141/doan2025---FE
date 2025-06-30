@@ -46,10 +46,10 @@ export const useUploadCampaign = () => {
         onSuccess: () => {
             // Invalidate các query campaign để reload lại danh sách
             queryClient.invalidateQueries({ queryKey: campaignKeys.lists?.() || ['campaigns'] });
-            toast.success('Tạo đợi phát thành công!');
+            // toast.success('Tạo đợi phát thành công!');
         },
         onError: () => {
-            toast.error('Tạo đợi phát thất bại!');
+            console.error('Tạo đợt phát thất bại!');
         },
     });
 };

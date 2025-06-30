@@ -173,7 +173,7 @@ function Timeline() {
                 setShowModal(false);
             } catch (err) {
                 console.error('Error uploading campaign:', err);
-                toast.error('Tạo đợi phát thất bại!');
+                toast.error('Tạo đợt phát thất bại!');
             }
         };
 
