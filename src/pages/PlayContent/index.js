@@ -18,12 +18,16 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import debounce from 'lodash/debounce';
+import { usePermission } from '~/hooks/usePermission';
+import { PERMISSIONS } from '~/constants/permissions';
 
 const cx = classNames.bind(styles);
 
 const allColumns = ['ID', 'Tên', 'Thể loại', 'Tag', 'Ảnh', 'Thời lượng', 'Kích cỡ', 'Chủ sở hữu'];
 
 function PlayContent() {
+    const { hasPermission } = usePermission([PERMISSIONS.PLAY]);
+
     const fileInputRef = useRef(null);
     const [visibleColumns, setVisibleColumns] = useState(['Tên', 'Thể loại', 'Thời lượng']);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -510,7 +514,7 @@ function PlayContent() {
             return {
                 id: content.ID,
                 name: content.Tên,
-                url: (content['Thể loại'].toLowerCase() === 'text') ? `http://localhost:3001/uploads/${content.Ảnh}` : content.Ảnh,
+                url: (content['Thể loại'].toLowerCase() !== 'text') ? `http://localhost:3001/uploads/${content.Ảnh}` : content.Ảnh,
                 type: content['Thể loại'].toLowerCase(),
                 duration: content['Thời lượng'],
             };
@@ -527,9 +531,11 @@ function PlayContent() {
             <div className={cx('header')}>
                 <h2>Thư viện</h2>
                 <div className={cx('actions')}>
-                    <button className={cx('play')} onClick={handlePlay} disabled={selectedRows.length === 0}>
-                        <FontAwesomeIcon icon={faPlay} /> Phát
-                    </button>
+                    {hasPermission && (
+                        <button className={cx('play')} onClick={handlePlay} disabled={selectedRows.length === 0}>
+                            <FontAwesomeIcon icon={faPlay} /> Phát
+                        </button>
+                    )}
                     <button className={cx('add')} onClick={() => setShowAddContentModal(true)}>
                         <FontAwesomeIcon icon={faPlus} />
                         Thêm Nội dung

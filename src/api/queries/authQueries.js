@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axiosInstance from '../axios';
 
 export const useLogin = () => {
@@ -40,6 +40,16 @@ export const useLogout = () => {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
             }
+        },
+    });
+};
+
+export const useGetMe = () => {
+    return useQuery({
+        queryKey: ['me'],
+        queryFn: async () => {
+            const { data } = await axiosInstance.get('/auth/me');
+            return data.data.user;
         },
     });
 };

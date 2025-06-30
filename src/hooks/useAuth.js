@@ -1,16 +1,35 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getSocket } from '~/services/socketService';
+import { useGetMe } from '~/api/queries/authQueries';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+    const queryClient = useQueryClient();
     const [user, setUser] = useState(() => {
-        // Khôi phục user từ localStorage khi khởi động
         const savedUser = localStorage.getItem('user');
         return savedUser ? JSON.parse(savedUser) : null;
     });
-    console.log("%c 1 --> Line: 8||useAuth.js\n user: ","color:#f0f;", user);
     const [userStatuses, setUserStatuses] = useState({});
+
+    // Sử dụng useGetMe để fetch user info
+    const { data: userData, isError } = useGetMe({
+        enabled: !!localStorage.getItem('token'), // Chỉ fetch khi có token
+        retry: 1,
+        onError: () => {
+            // Nếu fetch thất bại (token hết hạn hoặc không hợp lệ)
+            logout();
+        },
+    });
+
+    // Cập nhật user state khi userData thay đổi
+    useEffect(() => {
+        if (userData) {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+        }
+    }, [userData]);
 
     useEffect(() => {
         // Listen for user status changes when the socket is available
@@ -35,14 +54,17 @@ export const AuthProvider = ({ children }) => {
     }, [user]);
 
     const login = (userData) => {
-        // Chỉ set state, không lưu vào localStorage vì đã được xử lý trong loginMutation
         setUser(userData);
+        // Invalidate và refetch user info sau khi login
+        queryClient.invalidateQueries(['me']);
     };
 
     const logout = () => {
         setUser(null);
         setUserStatuses({});
-        // Không cần xóa localStorage vì đã được xử lý trong useLogout mutation
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        queryClient.clear(); // Clear all queries from cache
     };
 
     const getUserStatus = (userId) => {
@@ -50,7 +72,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, getUserStatus, userStatuses }}>
+        <AuthContext.Provider value={{
+            user,
+            login,
+            logout,
+            getUserStatus,
+            userStatuses,
+            isLoading: !user && !!localStorage.getItem('token'),
+            isAuthenticated: !!user
+        }}>
             {children}
         </AuthContext.Provider>
     );

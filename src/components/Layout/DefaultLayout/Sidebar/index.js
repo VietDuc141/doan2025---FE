@@ -1,48 +1,41 @@
 import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '~/hooks/useAuth';
+import { publicRoutes } from '~/routes';
 
 const cx = classNames.bind(styles);
 
 function Sidebar() {
+    const { user } = useAuth();
+    const userMenus = user?.menu || [];
+
+    // Lọc các routes được phép hiển thị trong menu và user có quyền truy cập
+    const authorizedMenuItems = publicRoutes.filter(
+        route => route.showInMenu && userMenus.includes(route.permission)
+    );
+
     return (
         <aside className={cx('wrapper')}>
             <ul className={cx('sidebar')}>
-                <ul className={cx('section-title')}>
-                    <a href="/">
-                        <h3>Bảng Điều Khiển</h3>
-                    </a>
-                </ul>
-                <li>
-                    <NavLink to="/play" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Phát Lập Tức
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/plan" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Lên lịch
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/play-content" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Nội dung
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/timeline" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Khung giờ phát
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/campaign" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Đợt Phát
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink to="/user" className={({ isActive }) => cx('nav-link', { active: isActive })}>
-                        Người sử dụng
-                    </NavLink>
-                </li>
+                {authorizedMenuItems.map((item, index) => (
+                    <li key={index}>
+                        {item.path === '/' ? (
+                            <ul className={cx('section-title')}>
+                                <NavLink to="/">
+                                    <h3>{item.title}</h3>
+                                </NavLink>
+                            </ul>
+                        ) : (
+                            <NavLink
+                                to={item.path}
+                                className={({ isActive }) => cx('nav-link', { active: isActive })}
+                            >
+                                {item.title}
+                            </NavLink>
+                        )}
+                    </li>
+                ))}
             </ul>
         </aside>
     );
