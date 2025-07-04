@@ -4,70 +4,74 @@ import { publicRoutes } from '~/routes';
 import { DefaultLayout } from '~/components/Layout';
 import { ToastContainer } from 'react-toastify';
 import { disconnectSocket, initializeSocket } from './services/socketService';
-import { useAuth } from '~/hooks/useAuth'; // You'll need to create this hook
+import { useAuth } from '~/hooks/useAuth';
+import { PlayerProvider } from './contexts/PlayerContext';
+import PlayerModal from './components/Modal/PlayerModal';
 
 function App() {
-    const { user } = useAuth(); // Assuming you have an authentication context
+    const { user } = useAuth();
 
     useEffect(() => {
-        console.log('%c 1 --> Line: 12||App.js\n user?.id: ', 'color:#f0f;', user?.id);
-        if (user?.id) {
-            const socket = initializeSocket(user.id);
-            console.log('%c 1 --> Line: 14||App.js\n socket: ', 'color:#f0f;', socket);
+        let userSocket = null;
+        if (user?._id) {
+            userSocket = initializeSocket(user._id);
 
             // Listen for user status changes
-            socket.on('user-status-change', (data) => {
-                // Here you can update your application state with the user's status
-                console.log('User status changed:', data);
-                // You might want to update a user context or state management system here
+            userSocket.on('user-status-change', (data) => {
+                console.log('[User] Status changed:', data);
             });
-
-            return () => {
-                disconnectSocket();
-            };
         }
+
+        return () => {
+            if (userSocket) {
+                disconnectSocket();
+            }
+        };
     }, [user]);
 
     return (
         <Router>
-            <div className="App">
-                <Routes>
-                    {publicRoutes.map((route, index) => {
-                        const Page = route.component;
-                        let Layout = DefaultLayout;
+            <PlayerProvider>
+                <div className="App">
+                    <Routes>
+                        {publicRoutes.map((route, index) => {
+                            const Page = route.component;
+                            let Layout = DefaultLayout;
 
-                        if (route.layout) {
-                            Layout = route.layout;
-                        } else if (route.layout === null) {
-                            Layout = Fragment;
-                        }
-                        return (
-                            <Route
-                                key={index}
-                                path={route.path}
-                                element={
-                                    <Layout>
-                                        <Page />
-                                    </Layout>
-                                }
-                            />
-                        );
-                    })}
-                </Routes>
+                            if (route.layout) {
+                                Layout = route.layout;
+                            } else if (route.layout === null) {
+                                Layout = Fragment;
+                            }
+                            return (
+                                <Route
+                                    key={index}
+                                    path={route.path}
+                                    element={
+                                        <Layout>
+                                            <Page />
+                                        </Layout>
+                                    }
+                                />
+                            );
+                        })}
+                    </Routes>
 
-                <ToastContainer
-                    position="top-right"
-                    autoClose={3000}
-                    hideProgressBar={false}
-                    newestOnTop={false}
-                    closeOnClick
-                    rtl={false}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                    theme="light"
-                />
-            </div>
+                    <ToastContainer
+                        position="top-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="light"
+                    />
+                    <PlayerModal />
+                </div>
+            </PlayerProvider>
         </Router>
     );
 }

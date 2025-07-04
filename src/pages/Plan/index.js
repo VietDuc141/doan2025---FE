@@ -176,7 +176,7 @@ function Plan() {
 
     const plans = useMemo(
         () =>
-            data?.data?.plans.map((plan) => ({
+            data?.data?.map((plan) => ({
                 ID: plan._id,
                 Tên: plan.name,
                 'Loại sự kiện': plan.eventType,
@@ -184,7 +184,9 @@ function Plan() {
                 Start_search: plan.start,
                 End: plan.end ? dayjs(plan.end).format('DD/MM/YYYY HH:mm:ss') : '',
                 'Sự kiện': event.find((opt) => opt.value === plan.event)?.label || plan.event,
-                'ID Đợt phát': plan.campaigns?.length > 0 ? plan.campaigns.map((item) => item.campaign).join(', ') : '',
+                'ID Đợt phát': Array.isArray(plan.campaigns) && plan.campaigns.length > 0
+                    ? plan.campaigns.map(campaign => campaign.campaign?._id || campaign.campaign).join(', ')
+                    : '',
                 SoV: plan.sov,
                 'Số lượt phát tối đa mỗi giờ': plan.maxPlaysPerHour,
                 'Nhận biết vị trí?': plan.locationAware ? 'Yes' : 'No',
@@ -468,7 +470,7 @@ function Plan() {
                                         <small>Vui lòng chọn một SoV để hiển thị cho Sự kiện này.</small>
                                     </div>
                                     <div className={cx('form-group')}>
-                                        <label>Số lượng phát tối đa mỗi giờ</label>
+                                        <label>Số lượt phát tối đa mỗi giờ</label>
                                         <input type="number" defaultValue={0} {...register('maxPlaysPerHour')} />
                                         <small>Giới hạn số lần phát mỗi giờ trên mỗi thiết bị.</small>
                                     </div>

@@ -45,11 +45,18 @@ export const useLogout = () => {
 };
 
 export const useGetMe = () => {
+    const token = localStorage.getItem('token');
+
     return useQuery({
         queryKey: ['me'],
         queryFn: async () => {
             const { data } = await axiosInstance.get('/auth/me');
             return data.data.user;
         },
+        enabled: !!token, // Chỉ gọi API khi có token
+        staleTime: 1000 * 60 * 5, // Data được coi là fresh trong 5 phút
+        cacheTime: 1000 * 60 * 30, // Cache được giữ trong 30 phút
+        refetchOnWindowFocus: false, // Không refetch khi focus lại window
+        refetchOnMount: false, // Không refetch khi component được mount lại
     });
 };

@@ -13,21 +13,19 @@ export const AuthProvider = ({ children }) => {
     });
     const [userStatuses, setUserStatuses] = useState({});
 
-    // Sử dụng useGetMe để fetch user info
-    const { data: userData, isError } = useGetMe({
-        enabled: !!localStorage.getItem('token'), // Chỉ fetch khi có token
-        retry: 1,
-        onError: () => {
-            // Nếu fetch thất bại (token hết hạn hoặc không hợp lệ)
-            logout();
-        },
-    });
+    const token = localStorage.getItem('token');
+    const { data: userData } = useGetMe();
 
-    // Cập nhật user state khi userData thay đổi
+    // Chỉ cập nhật user state khi thực sự có thay đổi
     useEffect(() => {
-        if (userData) {
+        if (!userData) return; // Không làm gì nếu không có userData
+
+        const currentUserStr = JSON.stringify(user);
+        const newUserStr = JSON.stringify(userData);
+
+        if (currentUserStr !== newUserStr) {
             setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('user', newUserStr);
         }
     }, [userData]);
 

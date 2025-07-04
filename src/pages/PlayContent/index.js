@@ -43,7 +43,7 @@ function PlayContent() {
         enableStats: 'Không',
     });
     const [selectedFile, setSelectedFile] = useState(null);
-    const [duration, setDuration] = useState(10); // Default duration for images
+    const [duration, setDuration] = useState(2); // Default duration for images
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
@@ -173,7 +173,7 @@ function PlayContent() {
                 media.src = URL.createObjectURL(file);
             } else {
                 // Với ảnh và các file khác, dùng duration mặc định
-                resolve(10);
+                resolve(2);
             }
         });
     };
@@ -225,7 +225,7 @@ function PlayContent() {
             await uploadContentMutation.mutateAsync(formData);
             setShowAddContentModal(false);
             setSelectedFile(null);
-            setDuration(10);
+            setDuration(2);
         } catch (error) {
             setUploadError(error.response?.data?.message || 'Có lỗi xảy ra khi tải lên file');
         } finally {
