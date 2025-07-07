@@ -60,3 +60,15 @@ export const useGetMe = () => {
         refetchOnMount: false, // Không refetch khi component được mount lại
     });
 };
+
+export const useChangePassword = () => {
+    return useMutation({
+        mutationFn: async (passwordData) => {
+            const { data } = await axiosInstance.post('/auth/change-password', {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+            });
+            return data.data;
+        },
+    });
+};

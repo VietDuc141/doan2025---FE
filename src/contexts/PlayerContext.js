@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import instance from '../api/axios';
+import { useAuth } from '~/hooks/useAuth';
 
 const PlayerContext = createContext();
 
@@ -19,6 +20,7 @@ const log = {
 };
 
 export function PlayerProvider({ children }) {
+    const { user } = useAuth();
     const [deviceId] = useState(() => {
         // Try to get existing deviceId from localStorage or create a new one
         const savedDeviceId = localStorage.getItem('player_device_id');
@@ -249,12 +251,26 @@ export function PlayerProvider({ children }) {
     }, [playlist, currentIndex]);
 
     useEffect(() => {
+        // Chỉ khởi tạo socket khi có user đăng nhập
+        if (!user) {
+            if (playerSocket) {
+                log.info('User logged out, cleaning up player socket connection');
+                playerSocket.disconnect();
+                playerSocket = null;
+                setIsConnected(false);
+            }
+            return;
+        }
+
         if (!playerSocket) {
             log.info('Initializing player socket connection...', { deviceId });
 
             playerSocket = io('http://localhost:3001', {
-                autoConnect: true,
+                autoConnect: false,
                 reconnection: true,
+                auth: {
+                    token: localStorage.getItem('token')
+                }
             });
 
             playerSocket.on('connect', () => {
@@ -274,6 +290,10 @@ export function PlayerProvider({ children }) {
             playerSocket.on('connect_error', (error) => {
                 log.error('Socket connection error:', error.message);
                 setIsConnected(false);
+                if (error.message.includes('authentication')) {
+                    playerSocket.disconnect();
+                    playerSocket = null;
+                }
             });
 
             // Listen for content updates
@@ -291,9 +311,12 @@ export function PlayerProvider({ children }) {
                     setIsPlaying(settings.isPlaying);
                 }
             });
+
+            // Kết nối socket sau khi đã setup tất cả event listeners
+            playerSocket.connect();
         }
 
-        // Cleanup on unmount
+        // Cleanup on unmount hoặc khi user thay đổi
         return () => {
             if (playerSocket) {
                 log.info('Cleaning up player socket connection');
@@ -304,9 +327,10 @@ export function PlayerProvider({ children }) {
                 playerSocket.off('settings-update');
                 playerSocket.disconnect();
                 playerSocket = null;
+                setIsConnected(false);
             }
         };
-    }, [deviceId]);
+    }, [user, deviceId]); // Thêm user vào dependencies
 
     const handleContentEnd = () => {
         log.info('Content ended, moving to next item');

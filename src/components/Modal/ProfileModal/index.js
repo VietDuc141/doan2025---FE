@@ -3,6 +3,7 @@ import styles from './ProfileModal.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useState } from 'react';
+import { useChangePassword } from '~/api/queries/authQueries';
 
 const cx = classNames.bind(styles);
 
@@ -11,18 +12,48 @@ function ProfileModal({ onClose, onSave }) {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [error, setError] = useState('');
 
-    const handleSubmit = () => {
-        let passwordChanged = false;
-        if (newPassword && newPassword === confirmNewPassword && newPassword !== currentPassword) {
-            passwordChanged = true;
-            // Logic to update password
+    const changePasswordMutation = useChangePassword();
+
+    const validateForm = () => {
+        if (newPassword && (!currentPassword || !confirmNewPassword)) {
+            setError('Vui lòng điền đầy đủ thông tin mật khẩu');
+            return false;
+        }
+        if (newPassword && newPassword !== confirmNewPassword) {
+            setError('Mật khẩu mới không khớp');
+            return false;
+        }
+        if (newPassword && newPassword === currentPassword) {
+            setError('Mật khẩu mới phải khác mật khẩu hiện tại');
+            return false;
+        }
+        return true;
+    };
+
+    const handleSubmit = async () => {
+        setError('');
+
+        if (!validateForm()) {
+            return;
         }
 
-        // Logic to save other profile info
-
-        onSave(passwordChanged);
-        onClose();
+        if (newPassword) {
+            try {
+                await changePasswordMutation.mutateAsync({
+                    currentPassword,
+                    newPassword,
+                });
+                onSave(true); // Thông báo đã thay đổi mật khẩu thành công
+                onClose();
+            } catch (error) {
+                setError(error.response?.data?.message || 'Có lỗi xảy ra khi thay đổi mật khẩu');
+            }
+        } else {
+            onSave(false);
+            onClose();
+        }
     };
 
     return (
@@ -33,12 +64,13 @@ function ProfileModal({ onClose, onSave }) {
                     <FontAwesomeIcon icon={faXmark} className={styles.closeIcon} onClick={onClose} />
                 </div>
                 <div className={styles.modalBody}>
+                    {error && <div className={styles.errorMessage}>{error}</div>}
                     <div className={cx('form-group-static')}>
                         <label>Tên người dùng</label>
                         <div className={cx('static-value')}>{username}</div>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Mật khẩu</label>
+                        <label>Mật khẩu hiện tại</label>
                         <input
                             type="password"
                             value={currentPassword}
@@ -66,11 +98,19 @@ function ProfileModal({ onClose, onSave }) {
                     </div>
                 </div>
                 <div className={styles.modalFooter}>
-                    <button className={styles.cancelBtn} onClick={onClose}>
+                    <button
+                        className={styles.cancelBtn}
+                        onClick={onClose}
+                        disabled={changePasswordMutation.isLoading}
+                    >
                         Hủy
                     </button>
-                    <button className={styles.saveBtn} onClick={handleSubmit}>
-                        Lưu
+                    <button
+                        className={styles.saveBtn}
+                        onClick={handleSubmit}
+                        disabled={changePasswordMutation.isLoading}
+                    >
+                        {changePasswordMutation.isLoading ? 'Đang lưu...' : 'Lưu'}
                     </button>
                 </div>
             </div>

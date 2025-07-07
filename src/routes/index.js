@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children, permission }) => {
             }
 
             // Case 2: Logged in but no permission
-            if (user && permission && !user.menu?.includes(permission)) {
+            if (user && permission && user.menu && !user.menu?.includes(permission)) {
                 toast.error('Bạn không có quyền truy cập trang này!');
                 const timer = setTimeout(() => {
                     setRedirectTo('/');
