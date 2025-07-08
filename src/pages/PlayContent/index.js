@@ -29,6 +29,10 @@ function PlayContent() {
     const { hasPermission } = usePermission([PERMISSIONS.PLAY]);
 
     const fileInputRef = useRef(null);
+    // State cho phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
     const [visibleColumns, setVisibleColumns] = useState(['Tên', 'Thể loại', 'Thời lượng']);
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -537,6 +541,30 @@ function PlayContent() {
         );
     };
 
+    // Tính toán dữ liệu cho trang hiện tại
+    const getCurrentPageData = () => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return contents.slice(startIndex, endIndex);
+    };
+
+    // Tính toán tổng số trang
+    const totalPages = Math.ceil(contents.length / itemsPerPage);
+
+    // Handler cho việc thay đổi số items mỗi trang
+    const handleItemsPerPageChange = (e) => {
+        const newItemsPerPage = parseInt(e.target.value);
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(1); // Reset về trang 1 khi thay đổi số items/trang
+    };
+
+    // Handler cho việc chuyển trang
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
     return (
         <div className={cx('play-content')}>
             <div className={cx('header')}>
@@ -599,11 +627,11 @@ function PlayContent() {
                 <div className={cx('table-controls')}>
                     <div className={cx('entries')}>
                         Show
-                        <select>
-                            <option>10</option>
-                            <option>25</option>
-                            <option>50</option>
-                            <option>100</option>
+                        <select value={itemsPerPage} onChange={handleItemsPerPageChange}>
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
                         </select>
                         entries
                     </div>
@@ -642,17 +670,20 @@ function PlayContent() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {contents.map((row, rowIdx) => (
-                                    <tr
-                                        key={rowIdx}
-                                        onClick={() => handleRowClick(rowIdx)}
-                                        className={cx({ selected: selectedRows.includes(rowIdx) })}
-                                    >
-                                        {visibleColumns.map((col, colIdx) => (
-                                            <td key={colIdx}>{row[col]}</td>
-                                        ))}
-                                    </tr>
-                                ))}
+                                {getCurrentPageData().map((row, rowIdx) => {
+                                    const actualIdx = (currentPage - 1) * itemsPerPage + rowIdx;
+                                    return (
+                                        <tr
+                                            key={actualIdx}
+                                            onClick={() => handleRowClick(actualIdx)}
+                                            className={cx({ selected: selectedRows.includes(actualIdx) })}
+                                        >
+                                            {visibleColumns.map((col, colIdx) => (
+                                                <td key={colIdx}>{row[col]}</td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -666,11 +697,24 @@ function PlayContent() {
                         <button className={cx('share')} onClick={handleShare}>
                             <FontAwesomeIcon icon={faShare} /> Share
                         </button>
-                        <span>Showing 1 to 2 of 2 entries</span>
+                        <span>
+                            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                            {Math.min(currentPage * itemsPerPage, contents.length)} of {contents.length} entries
+                        </span>
                     </div>
                     <div className={cx('right')}>
-                        <button>Trước</button>
-                        <button>Tiếp</button>
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            Trước
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                        >
+                            Tiếp
+                        </button>
                     </div>
                 </div>
             </div>
