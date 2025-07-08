@@ -522,8 +522,19 @@ function PlayContent() {
 
         // Mã hóa dữ liệu để truyền qua URL
         const encodedPlaylist = encodeURIComponent(JSON.stringify(selectedContents));
-        // Mở tab mới với đường dẫn /play và dữ liệu playlist
-        window.open(`/play?playlist=${encodedPlaylist}`, '_blank');
+
+        // Cấu hình cho cửa sổ mới
+        const width = 800;
+        const height = 600;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
+
+        // Mở cửa sổ mới với vị trí và kích thước được định nghĩa
+        window.open(
+            `/play?playlist=${encodedPlaylist}`,
+            'PlayWindow',
+            `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
+        );
     };
 
     return (
