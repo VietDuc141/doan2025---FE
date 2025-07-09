@@ -64,7 +64,6 @@ function Plan() {
     const [visibleColumns, setVisibleColumns] = useState([
         'Loại sự kiện',
         'Tên',
-        'Lặp lại?',
         'Start',
         'End',
         'Sự kiện',
@@ -184,9 +183,10 @@ function Plan() {
                 Start_search: plan.start,
                 End: plan.end ? dayjs(plan.end).format('DD/MM/YYYY HH:mm:ss') : '',
                 'Sự kiện': event.find((opt) => opt.value === plan.event)?.label || plan.event,
-                'ID Đợt phát': Array.isArray(plan.campaigns) && plan.campaigns.length > 0
-                    ? plan.campaigns.map(campaign => campaign.campaign?._id || campaign.campaign).join(', ')
-                    : '',
+                'ID Đợt phát':
+                    Array.isArray(plan.campaigns) && plan.campaigns.length > 0
+                        ? plan.campaigns.map((campaign) => campaign.campaign?._id || campaign.campaign).join(', ')
+                        : '',
                 SoV: plan.sov,
                 'Số lượt phát tối đa mỗi giờ': plan.maxPlaysPerHour,
                 'Nhận biết vị trí?': plan.locationAware ? 'Yes' : 'No',
@@ -426,17 +426,17 @@ function Plan() {
 
                                 <div className={cx('form-group')}>
                                     <label>Lặp lại</label>
-                                    <select onChange={(e) => setTimeFrame(e.target.value)} {...register('repeat')}>
+                                    <select
+                                        onChange={(e) => setTimeFrame(e.target.value)}
+                                        {...register('repeat')}
+                                        disabled
+                                    >
                                         {repeat.map((option) => (
                                             <option key={option.value} value={option.value}>
                                                 {option.label}
                                             </option>
                                         ))}
                                     </select>
-                                    <small>
-                                        Chọn loại khung giờ phát cho sự kiện này. Thiết lập thời gian chạy chọn "Tùy
-                                        chỉnh", để sự kiện chạy liên tục chọn "Luôn luôn".
-                                    </small>
                                 </div>
 
                                 {repeatValue === 'custom' && (
@@ -707,7 +707,7 @@ function Plan() {
                         <option value="Yes">Yes</option>
                     </select>
                 </div>
-                <div className={cx('filter-item')}>
+                {/* <div className={cx('filter-item')}>
                     <label>Lặp lại?</label>
                     <select name="repeatOp" value={uiFilters.repeatOp} onChange={handleFilterChange}>
                         <option></option>
@@ -717,7 +717,7 @@ function Plan() {
                             </option>
                         ))}
                     </select>
-                </div>
+                </div> */}
             </div>
 
             <div className={cx('table-container')}>
