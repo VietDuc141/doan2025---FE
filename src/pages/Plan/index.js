@@ -22,7 +22,6 @@ function Plan() {
         { value: 'ad_campaign', label: 'Đợt phát quảng cáo' },
     ];
     const repeat = [
-        { value: 'always', label: 'Luôn luôn' },
         { value: 'custom', label: 'Tùy chỉnh' },
     ];
     const event = [
@@ -30,15 +29,8 @@ function Plan() {
         { value: 'event', label: 'Sự kiện đặc biệt' },
     ];
     const eventType = [
-        { value: 'Bố cục' },
-        { value: 'Lệnh' },
-        { value: 'Bố cục chồng' },
-        { value: 'Bố cục gián đoạn' },
         { value: 'Đợt phát' },
-        { value: 'Action' },
         { value: 'Video/Image' },
-        { value: 'Danh sách phát' },
-        { value: 'Kết nối dữ liệu' },
     ];
     const sovType = [{ value: '50%' }, { value: '75%' }, { value: '100%' }];
     const priorityType = [{ value: 'Thấp' }, { value: 'Trung bình' }, { value: 'Cao' }];
@@ -458,29 +450,17 @@ function Plan() {
 
                                 <div className={cx('group')}>
                                     <div className={cx('form-group')}>
-                                        <label>SoV</label>
-                                        <select {...register('sov')}>
-                                            <option></option>
-                                            {sovType.map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.value}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <small>Vui lòng chọn một SoV để hiển thị cho Sự kiện này.</small>
-                                    </div>
-                                    <div className={cx('form-group')}>
                                         <label>Số lượt phát tối đa mỗi giờ</label>
                                         <input type="number" defaultValue={0} {...register('maxPlaysPerHour')} />
                                         <small>Giới hạn số lần phát mỗi giờ trên mỗi thiết bị.</small>
                                     </div>
-                                </div>
-                                <div className={cx('group')}>
                                     <div className={cx('form-group')}>
                                         <label>Thứ tự hiển thị</label>
                                         <input type="number" {...register('order')} />
                                         <small>Chọn thứ tự hiển thị cho sự kiện này.</small>
                                     </div>
+                                </div>
+                                <div className={cx('group')}>
                                     <div className={cx('form-group')}>
                                         <label>Ưu tiên</label>
                                         <select {...register('priority')}>

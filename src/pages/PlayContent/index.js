@@ -411,7 +411,7 @@ function PlayContent() {
             <div className={cx('modal-overlay')}>
                 <div className={cx('tidy-modal')}>
                     <div className={cx('tidy-modal-header')}>
-                        <h2>Tidy Library</h2>
+                        <h2>Xóa Nội Dung</h2>
                         <button className={cx('close-button')} onClick={() => setShowTidyModal(false)}>
                             <FontAwesomeIcon icon={faTimes} />
                         </button>

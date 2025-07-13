@@ -71,7 +71,6 @@ function Home() {
     return (
         <div className={cx('dashboard-content')}>
             <div className={cx('cards')}>
-                <DashboardCardOne title="Màn hình" value={2} iconColor="#f1c40f" />
                 <DashboardCardTwo
                     title="Dung lượng thư viện"
                     value={`${totalContentSize.data?.data.totalSizeMB.toFixed(2)} MB`}
@@ -98,7 +97,7 @@ function Home() {
                     </ResponsiveContainer>
                 </div>
                 <div className={cx('chart-box')}>
-                    <h3>Library Usage</h3>
+                    <h3>Dung lượng thư viện</h3>
                     <ResponsiveContainer>
                         <PieChart>
                             <Pie
@@ -116,39 +115,6 @@ function Home() {
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
-            </div>
-
-            <div className={cx('device-status')}>
-                <h3>Thiết bị hoạt động</h3>
-                <table className={cx('device-table')}>
-                    <thead>
-                        <tr>
-                            <th>Màn hình</th>
-                            <th>Đã đăng nhập</th>
-                            <th>Đã được cấp phép</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>DESKTOP-4FJ4FV3</td>
-                            <td>
-                                <FontAwesomeIcon icon={faCheck} />
-                            </td>
-                            <td>
-                                <FontAwesomeIcon icon={faCheck} />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>DESKTOP-GO8FMT</td>
-                            <td>
-                                <FontAwesomeIcon icon={faXmark} />
-                            </td>
-                            <td>
-                                <FontAwesomeIcon icon={faXmark} />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </div>
     );
